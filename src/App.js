@@ -1,94 +1,180 @@
 import "./App.css";
-import "./customBlocks/custom_Blocks";
-import React, { useState } from "react";
+import "./blockly/customBlocks";
+import { useState } from "react";
+
 import { BlocklyWorkspace } from "react-blockly";
-import Blockly from "blockly";
+import { Scene } from "./3d/Scene";
+import { agentControls } from "./3d/agentContext";
+import RobotCommandGenerator from "./blockly/robotCommandGenerator";
+import executeCommands from "./blockly/executeCommands";
 
 export default function App() {
   const [xml, setXml] = useState("");
-  const [javascriptCode, setJavascriptCode] = useState("");
+  const [commands, setCommands] = useState("");
 
-  const initialXml =
-    '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="text" x="70" y="30"><field name="TEXT"></field></block></xml>';
-  const toolboxCategories = {
-    kind: "categoryToolbox",
+  const initialXml = '<xml></xml>';
+  // const toolboxCategories = {
+  //   kind: "categoryToolbox",
+  //   contents: [
+  //     {
+  //       kind: "category",
+  //       name: "Move",
+  //       colour: "#5C81A6",
+  //       contents: [
+  //         {
+  //           kind: "block",
+  //           type: "move_up",
+  //         },
+  //         {
+  //           kind: "block",
+  //           type: "move_right",
+  //         },
+  //         {
+  //           kind: "block",
+  //           type: "move_down",
+  //         },
+  //         {
+  //           kind: "block",
+  //           type: "move_left",
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       kind: "category",
+  //       name: "Loops",
+  //       colour: "#A65C81",
+  //       contents: [
+  //         {
+  //           kind: "block",
+  //           type: "repeat_n_times",
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       kind: "category",
+  //       name: "Logic",
+  //       colour: "#A6A65C",
+  //       contents: [
+  //         {
+  //           kind: "block",
+  //           type: "if_then",
+  //         },
+  //         {
+  //           kind: "block",
+  //           type: "random_number_1_10",
+  //         },
+  //         {
+  //           kind: "block",
+  //           type: "math_compare",
+  //         },
+  //         {
+  //           kind: "block",
+  //           type: "number_input",
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       kind: "category",
+  //       name: "Rotate",
+  //       colour: "#5CA65C",
+  //       contents: [
+  //         {
+  //           kind: "block",
+  //           type: "rotate_clockwise",
+  //         },
+  //         {
+  //           kind: "block",
+  //           type: "rotate_counterclockwise",
+  //         },
+  //       ],
+  //     },
+  //   ],
+  // };
+  const flyoutToolbox = {
+    kind: "flyoutToolbox",
     contents: [
       {
-        kind: "category",
-        name: "Logic",
-        colour: "#5C81A6",
-        contents: [
-          {
-            kind: "block",
-            type: "controls_if",
-          },
-          {
-            kind: "block",
-            type: "logic_compare",
-          },
-        ],
+        kind: "block",
+        type: "move_forward",
       },
       {
-        kind: "category",
-        name: "Math",
-        colour: "#5CA65C",
-        contents: [
-          {
-            kind: "block",
-            type: "math_round",
-          },
-          {
-            kind: "block",
-            type: "math_number",
-          },
-        ],
+        kind: "block",
+        type: "move_backward",
       },
       {
-        kind: "category",
-        name: "Custom",
-        colour: "#5CA699",
-        contents: [
-          {
-            kind: "block",
-            type: "new_boundary_function",
-          },
-          {
-            kind: "block",
-            type: "return",
-          },
-        ],
+        kind: "block",
+        type: "turn_right",
+      },
+      {
+        kind: "block",
+        type: "turn_left",
+      },
+      {
+        kind: "block",
+        type: "repeat_n_times",
+      },
+      {
+        kind: "block",
+        type: "if_then",
+      },
+      {
+        kind: "block",
+        type: "random_number_1_10",
+      },
+      {
+        kind: "block",
+        type: "math_compare",
+      },
+      {
+        kind: "block",
+        type: "number_input",
       },
     ],
   };
   function workspaceDidChange(workspace) {
-    const code = Blockly.JavaScript.workspaceToCode(workspace);
-    setJavascriptCode(code);
+    // Используем наш генератор
+    const code = RobotCommandGenerator.workspaceToCode(workspace);
+    setCommands(code);
   }
 
   return (
-    <>
-      <BlocklyWorkspace
-        toolboxConfiguration={toolboxCategories}
-        initialXml={initialXml}
-        className="fill-height"
-        workspaceConfiguration={{
-          grid: {
-            spacing: 20,
-            length: 3,
-            colour: "#ccc",
-            snap: true,
-          },
-        }}
-        onWorkspaceChange={workspaceDidChange}
-        onXmlChange={setXml}
-      />
-      <pre id="generated-xml">{xml}</pre>
-      <textarea
-        id="code"
-        style={{ height: "200px", width: "400px" }}
-        value={javascriptCode}
-        readOnly
-      ></textarea>
-    </>
+    <div className="flex-row full-size">
+      <div className="flex-1 flex-col">
+        <BlocklyWorkspace
+          key="flyout-only"
+          toolboxConfiguration={flyoutToolbox}
+          initialXml={initialXml}
+          className="fill-height blockly-workspace-container"
+          workspaceConfiguration={{
+            grid: {
+              spacing: 20,
+              length: 3,
+              colour: "#ccc",
+              snap: true,
+            },
+            scrollbars: true,
+            toolbox: {
+              autoClose: false
+            }
+          }}
+          onWorkspaceChange={workspaceDidChange}
+          onXmlChange={setXml}
+        />
+        <div className="horizontal-controls">
+          <textarea
+            id="code"
+            className="code-textarea"
+            value={commands}
+            readOnly
+          ></textarea>
+          <button onClick={() => executeCommands(commands, agentControls)}>Execute</button>
+        </div>
+      </div>
+      <div className="scene-panel">
+        <div className="scene-container">
+          <Scene />
+        </div>
+      </div>
+    </div>
   );
 }
