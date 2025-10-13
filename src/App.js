@@ -1,146 +1,56 @@
+import { BlocklyWorkspace } from "react-blockly"
 import "./App.css";
 import "./blockly/customBlocks";
-import { useState } from "react";
-
-import { BlocklyWorkspace } from "react-blockly";
-import { Scene } from "./3d/Scene";
-import { agentControls } from "./3d/agentContext";
+import { useRef } from "react";
+import { Scene } from "./three/Scene";
 import RobotCommandGenerator from "./blockly/robotCommandGenerator";
-import executeCommands from "./blockly/executeCommands";
+import executeCommand from "./interpreter/executeCommand";
+import { useCommandQueue } from "./interpreter/useCommandQueue";
+
+const initialXml = '<xml></xml>';
+const flyoutToolbox = {
+kind: "flyoutToolbox",
+contents: [
+    {
+    kind: "block",
+    type: "move_forward",
+    },
+    {
+    kind: "block",
+    type: "move_backward",
+    },
+    {
+    kind: "block",
+    type: "turn_right",
+    },
+    {
+    kind: "block",
+    type: "turn_left",
+    },
+    {
+    kind: "block",
+    type: "repeat_n_times",
+    },
+    {
+    kind: "block",
+    type: "if_then",
+    }
+  ],
+};
 
 export default function App() {
-  const [xml, setXml] = useState("");
-  const [commands, setCommands] = useState("");
+  const workspaceRef = useRef(null);
 
-  const initialXml = '<xml></xml>';
-  // const toolboxCategories = {
-  //   kind: "categoryToolbox",
-  //   contents: [
-  //     {
-  //       kind: "category",
-  //       name: "Move",
-  //       colour: "#5C81A6",
-  //       contents: [
-  //         {
-  //           kind: "block",
-  //           type: "move_up",
-  //         },
-  //         {
-  //           kind: "block",
-  //           type: "move_right",
-  //         },
-  //         {
-  //           kind: "block",
-  //           type: "move_down",
-  //         },
-  //         {
-  //           kind: "block",
-  //           type: "move_left",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       kind: "category",
-  //       name: "Loops",
-  //       colour: "#A65C81",
-  //       contents: [
-  //         {
-  //           kind: "block",
-  //           type: "repeat_n_times",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       kind: "category",
-  //       name: "Logic",
-  //       colour: "#A6A65C",
-  //       contents: [
-  //         {
-  //           kind: "block",
-  //           type: "if_then",
-  //         },
-  //         {
-  //           kind: "block",
-  //           type: "random_number_1_10",
-  //         },
-  //         {
-  //           kind: "block",
-  //           type: "math_compare",
-  //         },
-  //         {
-  //           kind: "block",
-  //           type: "number_input",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       kind: "category",
-  //       name: "Rotate",
-  //       colour: "#5CA65C",
-  //       contents: [
-  //         {
-  //           kind: "block",
-  //           type: "rotate_clockwise",
-  //         },
-  //         {
-  //           kind: "block",
-  //           type: "rotate_counterclockwise",
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // };
-  const flyoutToolbox = {
-    kind: "flyoutToolbox",
-    contents: [
-      {
-        kind: "block",
-        type: "move_forward",
-      },
-      {
-        kind: "block",
-        type: "move_backward",
-      },
-      {
-        kind: "block",
-        type: "turn_right",
-      },
-      {
-        kind: "block",
-        type: "turn_left",
-      },
-      {
-        kind: "block",
-        type: "repeat_n_times",
-      },
-      {
-        kind: "block",
-        type: "if_then",
-      },
-      {
-        kind: "block",
-        type: "random_number_1_10",
-      },
-      {
-        kind: "block",
-        type: "math_compare",
-      },
-      {
-        kind: "block",
-        type: "number_input",
-      },
-    ],
-  };
+  const [state, api] = useCommandQueue(executeCommand);
+
   function workspaceDidChange(workspace) {
-    // Используем наш генератор
-    const code = RobotCommandGenerator.workspaceToCode(workspace);
-    setCommands(code);
+    workspaceRef.current = workspace;
   }
 
   return (
     <div className="flex-row full-size">
       <div className="flex-1 flex-col">
-        <BlocklyWorkspace
+      <BlocklyWorkspace
           key="flyout-only"
           toolboxConfiguration={flyoutToolbox}
           initialXml={initialXml}
@@ -158,22 +68,26 @@ export default function App() {
             }
           }}
           onWorkspaceChange={workspaceDidChange}
-          onXmlChange={setXml}
         />
         <div className="horizontal-controls">
-          <textarea
-            id="code"
-            className="code-textarea"
-            value={commands}
-            readOnly
-          ></textarea>
-          <button onClick={() => executeCommands(commands, agentControls)}>Execute</button>
+          
         </div>
       </div>
       <div className="scene-panel">
         <div className="scene-container">
           <Scene />
         </div>
+        <button 
+            className="executeButton"
+            onClick={
+              () => {
+                const workspace = workspaceRef.current;
+                const code = RobotCommandGenerator.workspaceToCode(workspace);
+                const commands = code.split('\n')
+                api.setQueue(commands);
+                api.start();
+              }
+          }>Execute</button>
       </div>
     </div>
   );

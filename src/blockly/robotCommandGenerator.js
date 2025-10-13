@@ -47,29 +47,5 @@ RobotCommandGenerator["if_then"] = function (block) {
   code += "END_IF\n";
   return code + next;
 };
-RobotCommandGenerator["random_number_1_10"] = function (block) {
-  return ["RANDOM_1_10", RobotCommandGenerator.ORDER_ATOMIC];
-};
-RobotCommandGenerator["math_compare"] = function (block) {
-  const a = RobotCommandGenerator.valueToCode(
-    block,
-    "A",
-    RobotCommandGenerator.ORDER_ATOMIC
-  ) || "0";
-  const b = RobotCommandGenerator.valueToCode(
-    block,
-    "B",
-    RobotCommandGenerator.ORDER_ATOMIC
-  ) || "0";
-  const op = block.getFieldValue("OPERATOR");
-  let opStr = "";
-  if (op === "EQ") opStr = "=";
-  else if (op === "GT") opStr = ">";
-  else if (op === "LT") opStr = "<";
-  return [`${a} ${opStr} ${b}`, RobotCommandGenerator.ORDER_ATOMIC];
-};
-RobotCommandGenerator["number_input"] = function (block) {
-  return [String(block.getFieldValue("NUM")), RobotCommandGenerator.ORDER_ATOMIC];
-};
 
 export default RobotCommandGenerator;

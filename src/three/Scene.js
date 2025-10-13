@@ -1,6 +1,6 @@
 import { Canvas } from '@react-three/fiber'
 import React, { useState, useRef } from 'react'
-import { AgentContext, agentControls } from './agentContext'
+import { AgentContext, agentControls } from '../state/agentContext'
 import { useAgent } from './useAgent';
 
 function Map({ width, height }) {
@@ -34,7 +34,6 @@ export function Scene() {
   const mapHeight = 6;
   const agentRadius = 0.5;
 
-  // Используем кастомный хук useAgent вместо своей логики
   const {
     agentState,
     agentControls: controlsFromHook

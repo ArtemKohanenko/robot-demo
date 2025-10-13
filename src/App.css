@@ -49,15 +49,22 @@ body {
 }
 
 .scene-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   width: 400px;
   height: 100vh;
   box-sizing: border-box;
   border-left: 1px solid #ccc;
   display: flex;
-  justify-content: center;
 }
 
 .scene-container {
   width: 360px;
   height: 360px;
+}
+
+.executeButton {
+  height: 30px;
+  width: 120px;
 }
