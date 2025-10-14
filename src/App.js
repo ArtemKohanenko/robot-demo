@@ -79,15 +79,15 @@ export default function App() {
         </div>
         <button 
             className="executeButton"
+            disabled={state.status === "running"}
             onClick={
               () => {
                 const workspace = workspaceRef.current;
                 const code = RobotCommandGenerator.workspaceToCode(workspace);
                 const commands = code.split('\n')
-                api.setQueue(commands);
-                api.start();
+                api.run(commands);
               }
-          }>Execute</button>
+          }>{state.status === "running" ? "Waiting..." : "Execute"}</button>
       </div>
     </div>
   );

@@ -1,12 +1,12 @@
 import * as THREE from "three";
+import { useLoader } from '@react-three/fiber'
 import React from 'react';
 
 
-const GRID_W = 10;
+const GRID_W = 8;
 const GRID_H = 8;
 const CELL_SIZE = 1.0;
 const HALF = CELL_SIZE / 2;
-const MOVE_DURATION = 0.18;
 
 export const CELL_KINDS = {
     EMPTY: "empty",
@@ -18,7 +18,6 @@ export const CELL_KINDS = {
 const CELL = {
   EMPTY: "empty",
   WALL: "wall",
-  WATER: "water",
   PICKUP: "pickup",
   DROPOFF: "dropoff",
 };
@@ -26,41 +25,61 @@ const CELL = {
   
 
 function gridToWorld(x, y) {
-    return new THREE.Vector3(x * CELL_SIZE + HALF, 0, y * CELL_SIZE + HALF);
+    // Инвертируем ось Y сетки по Z, чтобы (0,0) была внизу слева визуально
+    return new THREE.Vector3(
+      x * CELL_SIZE + HALF,
+      0,
+      (GRID_H - 1 - y) * CELL_SIZE + HALF
+    );
   }
-
-function worldToGrid(vec3) {
-    const gx = Math.floor(vec3.x / CELL_SIZE);
-    const gy = Math.floor(vec3.z / CELL_SIZE);
-    return { gx, gy };
-}
 
 function makeInitialGrid() {
   const g = Array.from({ length: GRID_H }, () =>
     Array.from({ length: GRID_W }, () => ({ type: CELL.EMPTY }))
   );
 
-  // Пример: разные препятствия и точки
   g[2][3] = { type: CELL.WALL, meta: { height: 1.2 } };
-  g[4][5] = { type: CELL.WATER, meta: { depth: 0.2 } };
   g[1][1] = { type: CELL.PICKUP, meta: { id: "P1" } };
-  g[6][8] = { type: CELL.DROPOFF, meta: { id: "D1" } };
 
-  // ещё пара стен
+  g[6][6] = { type: CELL.DROPOFF, meta: { id: "D1" } };
+
+  g[7][2] = { type: CELL.WALL };
   g[0][4] = { type: CELL.WALL };
   g[3][7] = { type: CELL.WALL };
 
   return g;
 }
 
+// Единый статический грид для визуализации и коллизий
+const STATIC_GRID = makeInitialGrid();
 
-function canMoveTo(grid, x, y) {
-    if (x < 0 || y < 0 || x >= GRID_W || y >= GRID_H) return false;
-    if (grid[y][x] === 1) return false; // блок
-    return true;
+// Проверка: можно ли заехать в клетку по мировым координатам агента (логические X,Y)
+export function canEnterWorld(x, y) {
+  // Преобразуем мировые координаты центра клетки в индексы сетки
+  const i = Math.round(x + GRID_W / 2 - 0.5);
+  const zCell = Math.round(y + GRID_H / 2 - 0.5);
+  const j = GRID_H - 1 - zCell; // инверсия по оси Z
+
+
+  if (i < 0 || i >= GRID_W || j < 0 || j >= GRID_H) return false;
+  const cell = STATIC_GRID[j][i];
+  return cell.type !== CELL.WALL;
 }
 
+// Проверка возможности перемещения в логические координаты агента (мир useAgent)
+// Вход: логические координаты агента в системе [-w/2..w/2] по X и Y
+// Выход: true/false — можно ли войти в клетку (не выходит за границы и не стена)
+export function canEnterLogical(i, j, mapWidth = GRID_W, mapHeight = GRID_H) {
+  // Логические координаты теперь индексы сетки: i по X [0..mapWidth-1], j по Y [0..mapHeight-1]
+  if (i < 0 || i >= mapWidth || j < 0 || j >= mapHeight) return false;
+  const cell = STATIC_GRID[j][i];
+  return cell.type !== CELL.WALL;
+}
+
+//
+
 function GridVisual({ grid }) {
+  const grassTexture = useLoader(THREE.TextureLoader, '/textures/cell.png')
     const cells = [];
     for (let j = 0; j < GRID_H; j++) {
       for (let i = 0; i < GRID_W; i++) {
@@ -74,11 +93,8 @@ function GridVisual({ grid }) {
             rotation={[-Math.PI / 2, 0, 0]}
           >
             <planeGeometry args={[CELL_SIZE * 0.98, CELL_SIZE * 0.98]} />
-            <meshStandardMaterial
-              // чуть разный цвет для контраста
-              color={cell.type === CELL.WATER ? "#91b5ff" : "#e6e6e6"}
-              transparent={cell.type === CELL.WATER}
-              opacity={cell.type === CELL.WATER ? 0.9 : 1}
+            <meshBasicMaterial
+              map={grassTexture}
             />
           </mesh>
         );
@@ -90,14 +106,6 @@ function GridVisual({ grid }) {
             <mesh key={`wall-${i}-${j}`} position={[world.x, h / 2, world.z]}>
               <boxGeometry args={[CELL_SIZE * 0.9, h, CELL_SIZE * 0.9]} />
               <meshStandardMaterial color="#8b5a3c" />
-            </mesh>
-          );
-        } else if (cell.type === CELL.WATER) {
-          const d = (cell.meta && cell.meta.depth) || 0.2;
-          cells.push(
-            <mesh key={`water-${i}-${j}`} position={[world.x, 0.01, world.z]}>
-              <cylinderGeometry args={[CELL_SIZE * 0.45, CELL_SIZE * 0.45, d, 6]} />
-              <meshStandardMaterial color="#4da6ff" transparent opacity={0.6} />
             </mesh>
           );
         } else if (cell.type === CELL.PICKUP) {
@@ -125,14 +133,12 @@ function GridVisual({ grid }) {
   
 
 export function Map({ width, height }) {
-  const [grid, setGrid] = React.useState(makeInitialGrid());
+  const grid = React.useMemo(() => STATIC_GRID, []);
 
   return (
-      <mesh position={[0, 0, 0]}>
-          <planeGeometry args={[width, height]} />
-          {/* <meshBasicMaterial color="green" /> */}
+      <group>
           <GridVisual grid={grid} />
-      </mesh>
+      </group>
   )
 }
   

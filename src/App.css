@@ -1,5 +1,5 @@
 body {
-  background-color: gray;
+  background-color: #e4e4e4;
 }
 
 .fill-height {
@@ -67,4 +67,9 @@ body {
 .executeButton {
   height: 30px;
   width: 120px;
+}
+
+.executeButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

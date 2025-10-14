@@ -25,6 +25,14 @@ export function useCommandQueue(executor) {
     }));
   }, []);
 
+  const run = React.useCallback((cmds) => {
+    setState(prev => ({
+      ...prev,
+      queue: cmds,
+      status: "running",
+    }));
+  }, []);
+
   const start = React.useCallback(() => {
     setState(prev => {
       if (prev.status === "running") return prev;
@@ -91,5 +99,5 @@ export function useCommandQueue(executor) {
       });
   }, [state.status, state.queue, state.current, executor]);
 
-  return [state, { enqueue, setQueue, start, pause, resume, stop }];
+  return [state, { enqueue, setQueue, start, pause, resume, stop, run }];
 }

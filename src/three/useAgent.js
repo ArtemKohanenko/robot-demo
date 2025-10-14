@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
+import { canEnterLogical } from './Map'
 
 const DIRECTIONS = [
     { dx: 0, dy: 1 },   // 0 - вверх
@@ -17,8 +18,10 @@ export function useAgent({
     duration = 300
 } = {}) {
     const [agentState, setAgentState] = useState(() => ({
-        x: -mapWidth / 2 + agentRadius,
-        y: -mapHeight / 2 + agentRadius,
+        // Логические координаты: целочисленные индексы клеток сетки (i, j)
+        // По умолчанию стартуем в левом нижнем углу карты
+        x: 0,
+        y: mapHeight - 1,
         direction: 1
     }))
     const agentStateRef = useRef(agentState)
@@ -44,23 +47,21 @@ export function useAgent({
     const moveForward = useCallback(async () => {
         const { x, y, direction } = agentStateRef.current
         const { dx, dy } = DIRECTIONS[direction]
-        let newX = x + dx
-        let newY = y + dy
-        newX = Math.max(-mapWidth/2 + agentRadius, Math.min(mapWidth/2 - agentRadius, newX))
-        newY = Math.max(-mapHeight/2 + agentRadius, Math.min(mapHeight/2 - agentRadius, newY))
-        if (newX !== x || newY !== y)
+        const newX = x + dx
+        const newY = y + dy
+        if (canEnterLogical(newX, newY, mapWidth, mapHeight)) {
             await animateMove({ x: newX, y: newY, direction })
+        }
     }, [animateMove, mapWidth, mapHeight])
 
     const moveBackward = useCallback(async () => {
         const { x, y, direction } = agentStateRef.current
         const { dx, dy } = DIRECTIONS[direction]
-        let newX = x - dx
-        let newY = y - dy
-        newX = Math.max(-mapWidth/2 + agentRadius, Math.min(mapWidth/2 - agentRadius, newX))
-        newY = Math.max(-mapHeight/2 + agentRadius, Math.min(mapHeight/2 - agentRadius, newY))
-        if (newX !== x || newY !== y)
+        const newX = x - dx
+        const newY = y - dy
+        if (canEnterLogical(newX, newY, mapWidth, mapHeight)) {
             await animateMove({ x: newX, y: newY, direction })
+        }
     }, [animateMove, mapWidth, mapHeight])
 
     const turnLeft = useCallback(async () => {
