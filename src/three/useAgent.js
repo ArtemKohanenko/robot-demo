@@ -10,13 +10,17 @@ const DIRECTIONS = [
 const DIRECTION_COUNT = DIRECTIONS.length
 
 export function useAgent({
-    mapWidth = 10,
-    mapHeight = 6,
+    mapWidth,
+    mapHeight,
     agentRadius = 0.5,
     steps = 20,
     duration = 300
 } = {}) {
-    const [agentState, setAgentState] = useState({ x: 1, y: 1, direction: 1 })
+    const [agentState, setAgentState] = useState(() => ({
+        x: -mapWidth / 2 + agentRadius,
+        y: -mapHeight / 2 + agentRadius,
+        direction: 1
+    }))
     const agentStateRef = useRef(agentState)
     agentStateRef.current = agentState
 
@@ -42,8 +46,8 @@ export function useAgent({
         const { dx, dy } = DIRECTIONS[direction]
         let newX = x + dx
         let newY = y + dy
-        newX = Math.max(-mapWidth/2, Math.min(mapWidth/2, newX))
-        newY = Math.max(-mapHeight/2, Math.min(mapHeight/2, newY))
+        newX = Math.max(-mapWidth/2 + agentRadius, Math.min(mapWidth/2 - agentRadius, newX))
+        newY = Math.max(-mapHeight/2 + agentRadius, Math.min(mapHeight/2 - agentRadius, newY))
         if (newX !== x || newY !== y)
             await animateMove({ x: newX, y: newY, direction })
     }, [animateMove, mapWidth, mapHeight])
@@ -53,8 +57,8 @@ export function useAgent({
         const { dx, dy } = DIRECTIONS[direction]
         let newX = x - dx
         let newY = y - dy
-        newX = Math.max(-mapWidth/2, Math.min(mapWidth/2, newX))
-        newY = Math.max(-mapHeight/2, Math.min(mapHeight/2, newY))
+        newX = Math.max(-mapWidth/2 + agentRadius, Math.min(mapWidth/2 - agentRadius, newX))
+        newY = Math.max(-mapHeight/2 + agentRadius, Math.min(mapHeight/2 - agentRadius, newY))
         if (newX !== x || newY !== y)
             await animateMove({ x: newX, y: newY, direction })
     }, [animateMove, mapWidth, mapHeight])
