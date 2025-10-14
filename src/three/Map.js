@@ -1,0 +1,138 @@
+import * as THREE from "three";
+import React from 'react';
+
+
+const GRID_W = 10;
+const GRID_H = 8;
+const CELL_SIZE = 1.0;
+const HALF = CELL_SIZE / 2;
+const MOVE_DURATION = 0.18;
+
+export const CELL_KINDS = {
+    EMPTY: "empty",
+    OBSTACLE: "obstacle",
+    PICKUP: "pickup",
+    DROPOFF: "dropoff",
+};
+
+const CELL = {
+  EMPTY: "empty",
+  WALL: "wall",
+  WATER: "water",
+  PICKUP: "pickup",
+  DROPOFF: "dropoff",
+};
+
+  
+
+function gridToWorld(x, y) {
+    return new THREE.Vector3(x * CELL_SIZE + HALF, 0, y * CELL_SIZE + HALF);
+  }
+
+function worldToGrid(vec3) {
+    const gx = Math.floor(vec3.x / CELL_SIZE);
+    const gy = Math.floor(vec3.z / CELL_SIZE);
+    return { gx, gy };
+}
+
+function makeInitialGrid() {
+  const g = Array.from({ length: GRID_H }, () =>
+    Array.from({ length: GRID_W }, () => ({ type: CELL.EMPTY }))
+  );
+
+  // Пример: разные препятствия и точки
+  g[2][3] = { type: CELL.WALL, meta: { height: 1.2 } };
+  g[4][5] = { type: CELL.WATER, meta: { depth: 0.2 } };
+  g[1][1] = { type: CELL.PICKUP, meta: { id: "P1" } };
+  g[6][8] = { type: CELL.DROPOFF, meta: { id: "D1" } };
+
+  // ещё пара стен
+  g[0][4] = { type: CELL.WALL };
+  g[3][7] = { type: CELL.WALL };
+
+  return g;
+}
+
+
+function canMoveTo(grid, x, y) {
+    if (x < 0 || y < 0 || x >= GRID_W || y >= GRID_H) return false;
+    if (grid[y][x] === 1) return false; // блок
+    return true;
+}
+
+function GridVisual({ grid }) {
+    const cells = [];
+    for (let j = 0; j < GRID_H; j++) {
+      for (let i = 0; i < GRID_W; i++) {
+        const cell = grid[j][i];
+        const world = gridToWorld(i, j);
+        // базовая плитка
+        cells.push(
+          <mesh
+            key={`tile-${i}-${j}`}
+            position={[world.x, 0, world.z]}
+            rotation={[-Math.PI / 2, 0, 0]}
+          >
+            <planeGeometry args={[CELL_SIZE * 0.98, CELL_SIZE * 0.98]} />
+            <meshStandardMaterial
+              // чуть разный цвет для контраста
+              color={cell.type === CELL.WATER ? "#91b5ff" : "#e6e6e6"}
+              transparent={cell.type === CELL.WATER}
+              opacity={cell.type === CELL.WATER ? 0.9 : 1}
+            />
+          </mesh>
+        );
+  
+        // отображаем объекты поверх плитки
+        if (cell.type === CELL.WALL) {
+          const h = (cell.meta && cell.meta.height) || 1.0;
+          cells.push(
+            <mesh key={`wall-${i}-${j}`} position={[world.x, h / 2, world.z]}>
+              <boxGeometry args={[CELL_SIZE * 0.9, h, CELL_SIZE * 0.9]} />
+              <meshStandardMaterial color="#8b5a3c" />
+            </mesh>
+          );
+        } else if (cell.type === CELL.WATER) {
+          const d = (cell.meta && cell.meta.depth) || 0.2;
+          cells.push(
+            <mesh key={`water-${i}-${j}`} position={[world.x, 0.01, world.z]}>
+              <cylinderGeometry args={[CELL_SIZE * 0.45, CELL_SIZE * 0.45, d, 6]} />
+              <meshStandardMaterial color="#4da6ff" transparent opacity={0.6} />
+            </mesh>
+          );
+        } else if (cell.type === CELL.PICKUP) {
+          // маркер пункта получения — зелёный цилиндр и метка
+          cells.push(
+            <group key={`pickup-${i}-${j}`} position={[world.x, 0.05, world.z]}>
+              <cylinderGeometry args={[0.18, 0.18, 0.12, 16]} />
+              <meshStandardMaterial attach="material" color="#2ecc71" />
+            </group>
+          );
+        } else if (cell.type === CELL.DROPOFF) {
+          // маркер сдачи — конус / тор
+          cells.push(
+            <group key={`drop-${i}-${j}`} position={[world.x, 0.05, world.z]}>
+              <coneGeometry args={[0.18, 0.25, 16]} />
+              <meshStandardMaterial color="#e76f51" />
+            </group>
+          );
+        }
+      }
+    }
+    return <group>{cells}</group>;
+}
+  
+  
+
+export function Map({ width, height }) {
+  const [grid, setGrid] = React.useState(makeInitialGrid());
+
+  return (
+      <mesh position={[0, 0, 0]}>
+          <planeGeometry args={[width, height]} />
+          {/* <meshBasicMaterial color="green" /> */}
+          <GridVisual grid={grid} />
+      </mesh>
+  )
+}
+  

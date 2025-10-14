@@ -2,15 +2,8 @@ import { Canvas } from '@react-three/fiber'
 import React, { useState, useRef } from 'react'
 import { AgentContext, agentControls } from '../state/agentContext'
 import { useAgent } from './useAgent';
+import { Map } from './Map'
 
-function Map({ width, height }) {
-  return (
-    <mesh position={[0, 0, 0]}>
-      <planeGeometry args={[width, height]} />
-      <meshBasicMaterial color="green" />
-    </mesh>
-  )
-}
 
 function Agent({ x, y, radius, direction }) {
   // Направление: 0 - вверх, 1 - вправо, 2 - вниз, 3 - влево
@@ -20,7 +13,6 @@ function Agent({ x, y, radius, direction }) {
     <mesh position={[x, y, 0.1]} rotation={[0, 0, rotation]}>
       <circleGeometry args={[radius, 32]} />
       <meshBasicMaterial color="red" />
-      {/* Добавим "нос" агента */}
       <mesh position={[radius * 0.8, 0, 0.02]}>
         <circleGeometry args={[radius * 0.2, 16]} />
         <meshBasicMaterial color="yellow" />ы
