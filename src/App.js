@@ -46,6 +46,10 @@ const flyoutToolbox = {
     {
       kind: "block",
       type: "if_then",
+    },
+    {
+      kind: "block",
+      type: "is_wall_ahead"
     }
   ],
 };

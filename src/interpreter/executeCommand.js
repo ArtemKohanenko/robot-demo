@@ -1,5 +1,37 @@
+import { isWallAt } from "../three/Map";
+
+const ifStack = [];
+
 export default function executeVirtualRobotCommand(cmd, agentControls) {
   const text = String(cmd).trim();
+
+  // Сперва обрабатываем управляющие конструкции IF/END_IF
+  const ifMatch = text.match(/^IF\s+(.+)$/i);
+  if (ifMatch) {
+    const condition = ifMatch[1].trim();
+    let result = false;
+    if (/^IS_WALL_AHEAD\s*$/i.test(condition)) {
+      const pos = agentControls.getPos();
+      const dir = pos.direction;
+      const dx = dir === 0 ? 0 : dir === 1 ? 1 : dir === 2 ? 0 : -1;
+      const dy = dir === 0 ? 1 : dir === 1 ? 0 : dir === 2 ? -1 : 0;
+      const i = Math.round(pos.x + dx);
+      const j = Math.round(pos.y + dy);
+      result = isWallAt(i, j);
+    }
+    ifStack.push(Boolean(result));
+    return Promise.resolve();
+  }
+
+  if (/^END_IF\b/i.test(text)) {
+    ifStack.pop();
+    return Promise.resolve();
+  }
+
+  // Если текущая ветка ложная — игнорируем любые исполняемые команды
+  if (ifStack.length > 0 && ifStack[ifStack.length - 1] === false) {
+    return Promise.resolve();
+  }
 
   const forwardMatch = text.match(/^MOVE_FORWARD\s+(\d+)\s*$/i);
   if (forwardMatch) {

@@ -97,7 +97,7 @@ export function useCommandQueue(executor) {
         cancelCurrentRef.current = null;
         setState(prev => ({ ...prev, status: "error", error: err }));
       });
-  }, [state.status, state.queue, state.current, executor]);
+  }, [state, executor]);
 
   return [state, { enqueue, setQueue, start, pause, resume, stop, run }];
 }

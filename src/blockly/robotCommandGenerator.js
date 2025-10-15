@@ -48,11 +48,8 @@ RobotCommandGenerator["repeat_n_times"] = function (block) {
   return code + next;
 };
 RobotCommandGenerator["if_then"] = function (block) {
-  const condition = RobotCommandGenerator.valueToCode(
-    block,
-    "CONDITION",
-    RobotCommandGenerator.ORDER_ATOMIC
-  ) || "false";
+  const condition =
+    RobotCommandGenerator.valueToCode(block, "CONDITION", RobotCommandGenerator.ORDER_ATOMIC) || "false";
   const branch = RobotCommandGenerator.statementToCode(block, "DO");
   const next = RobotCommandGenerator.blockToCode(block.getNextBlock()) || "";
   let code = "";
@@ -60,6 +57,9 @@ RobotCommandGenerator["if_then"] = function (block) {
   code += branch;
   code += "END_IF\n";
   return code + next;
+};
+RobotCommandGenerator["is_wall_ahead"] = function (block) {
+  return ["IS_WALL_AHEAD", RobotCommandGenerator.ORDER_ATOMIC];
 };
 
 export default RobotCommandGenerator;

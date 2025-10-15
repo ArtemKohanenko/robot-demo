@@ -10,7 +10,6 @@ const HALF = CELL_SIZE / 2;
 
 export const CELL_KINDS = {
     EMPTY: "empty",
-    OBSTACLE: "obstacle",
     PICKUP: "pickup",
     DROPOFF: "dropoff",
 };
@@ -105,7 +104,12 @@ export function canEnterLogical(i, j, mapWidth = GRID_W, mapHeight = GRID_H) {
   return cell.type !== CELL.WALL;
 }
 
-//
+export function isWallAt(i, j, mapWidth = GRID_W, mapHeight = GRID_H) {
+  if (i < 0 || i >= mapWidth || j < 0 || j >= mapHeight) return false;
+  const type = getCellType(i, j);
+  return type === CELL.WALL;
+}
+
 
 function GridVisual({ grid }) {
   const grassTexture = useLoader(THREE.TextureLoader, '/textures/cell.png')

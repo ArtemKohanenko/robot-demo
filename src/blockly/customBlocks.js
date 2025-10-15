@@ -126,3 +126,15 @@ Blockly.Blocks['if_then'] = {
         this.setHelpUrl("");
     }
 };
+
+Blockly.Blocks['is_wall_ahead'] = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Is wall ahead?");
+        this.setInputsInline(false);
+        this.setOutput(true, "Boolean");
+        this.setColour(60);
+        this.setTooltip("Returns true if there is a wall directly ahead");
+        this.setHelpUrl("");
+    }
+};
