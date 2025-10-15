@@ -42,6 +42,15 @@ export default function executeVirtualRobotCommand(cmd, agentControls) {
     return agentControls.moveForward(steps);
   }
 
+  const backwardMatch = text.match(/^MOVE_BACKWARD\s+(\d+)\s*$/i);
+  if (backwardMatch) {
+    const steps = parseInt(backwardMatch[1], 10);
+    if (!Number.isFinite(steps) || steps <= 0) {
+      return Promise.reject(new Error("Invalid steps for MOVE_BACKWARD: " + cmd));
+    }
+    return agentControls.moveBackward(steps);
+  }
+
   const waitMatch = text.match(/^WAIT\s+(\d+)\s*$/i);
   if (waitMatch) {
     const seconds = parseInt(waitMatch[1], 10);
@@ -52,7 +61,6 @@ export default function executeVirtualRobotCommand(cmd, agentControls) {
   }
 
   const commandMatchers = [
-    { re: /^MOVE_BACKWARD\s*$/i, fn: agentControls.moveBackward },
     { re: /^TURN_RIGHT\s*$/i, fn: agentControls.turnRight },
     { re: /^TURN_LEFT\s*$/i, fn: agentControls.turnLeft },
     { re: /^PICKUP\s*$/i, fn: agentControls.pickUp },

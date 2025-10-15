@@ -8,8 +8,9 @@ RobotCommandGenerator["move_forward"] = function (block) {
   return `MOVE_FORWARD ${cells}\n` + next;
 };
 RobotCommandGenerator["move_backward"] = function (block) {
+  const cells = block.getFieldValue("CELLS");
   const next = RobotCommandGenerator.blockToCode(block.getNextBlock()) || "";
-  return "MOVE_BACKWARD\n" + next;
+  return `MOVE_BACKWARD ${cells}\n` + next;
 };
 RobotCommandGenerator["turn_right"] = function (block) {
   const next = RobotCommandGenerator.blockToCode(block.getNextBlock()) || "";

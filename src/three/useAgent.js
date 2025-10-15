@@ -106,15 +106,19 @@ export function useAgent({
         }
     }, [hasCargo, animateSquash, mapWidth, mapHeight])
 
-    const moveBackward = useCallback(async () => {
-        const { x, y, direction } = agentStateRef.current
-        const { dx, dy } = DIRECTIONS[direction]
-        const newX = x - dx
-        const newY = y - dy
-        if (canEnterLogical(newX, newY, mapWidth, mapHeight)) {
+    const moveBackward = useCallback(async (numSteps = 1) => {
+        const totalSteps = Math.max(1, Number.isFinite(numSteps) ? Math.floor(numSteps) : 1)
+        for (let i = 0; i < totalSteps; i++) {
+            const { x, y, direction } = agentStateRef.current
+            const { dx, dy } = DIRECTIONS[direction]
+            const newX = x - dx
+            const newY = y - dy
+            if (!canEnterLogical(newX, newY, mapWidth, mapHeight)) break
             await animateMove({ x: newX, y: newY, direction })
+            const stepPauseMs = Math.max(50, Math.floor(duration / 3))
+            await new Promise(res => setTimeout(res, stepPauseMs))
         }
-    }, [animateMove, mapWidth, mapHeight])
+    }, [animateMove, mapWidth, mapHeight, duration])
 
     const turnLeft = useCallback(async () => {
         const { x, y, direction } = agentStateRef.current

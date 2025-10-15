@@ -19,7 +19,10 @@ Blockly.Blocks['move_forward'] = {
 
 Blockly.Blocks['move_backward'] = {
     init: function () {
-        this.appendDummyInput().appendField("Move Backward");
+        this.appendDummyInput()
+        .appendField("Move backward on")
+        .appendField(new Blockly.FieldNumber(1, 1, 100, 1), "CELLS")
+        .appendField("steps");
         this.setInputsInline(false);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
