@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { canEnterLogical } from './Map'
+import { canEnterLogical, isAdjacentToPickup, isAdjacentToDropoff } from './Map'
 
 const DIRECTIONS = [
     { dx: 0, dy: 1 },   // 0 - вверх
@@ -22,8 +22,10 @@ export function useAgent({
         // По умолчанию стартуем в левом нижнем углу карты
         x: 0,
         y: mapHeight - 1,
-        direction: 1
+        direction: 1,
+        scaleY: 1
     }))
+    const [hasCargo, setHasCargo] = useState(false)
     const agentStateRef = useRef(agentState)
     agentStateRef.current = agentState
 
@@ -39,9 +41,30 @@ export function useAgent({
             const x = from.x + dx * t
             const y = from.y + dy * t
             let newDir = (from.direction + dDir * t + DIRECTION_COUNT) % DIRECTION_COUNT
-            setAgentState({ x, y, direction: t < 1 ? newDir : to.direction })
+            setAgentState({ x, y, direction: t < 1 ? newDir : to.direction, scaleY: 1 })
         }
-        setAgentState(to)
+        setAgentState({ ...to, scaleY: to.scaleY ?? 1 })
+    }, [steps, duration])
+
+    const animateSquash = useCallback(async ({ minScaleY = 0.6 } = {}) => {
+        const from = { ...agentStateRef.current }
+        const frames = Math.max(4, Math.floor(steps / 2))
+        const half = Math.floor(frames / 2)
+        // Сжать
+        for (let i = 1; i <= half; i++) {
+            await new Promise(res => setTimeout(res, (duration) / frames))
+            const t = i / half
+            const scaleY = 1 - (1 - minScaleY) * t
+            setAgentState({ ...from, scaleY })
+        }
+        // Вернуть
+        for (let i = 1; i <= frames - half; i++) {
+            await new Promise(res => setTimeout(res, (duration) / frames))
+            const t = i / (frames - half)
+            const scaleY = minScaleY + (1 - minScaleY) * t
+            setAgentState({ ...from, scaleY })
+        }
+        setAgentState({ ...from, scaleY: 1 })
     }, [steps, duration])
 
     const moveForward = useCallback(async () => {
@@ -53,6 +76,33 @@ export function useAgent({
             await animateMove({ x: newX, y: newY, direction })
         }
     }, [animateMove, mapWidth, mapHeight])
+
+    const pickUp = useCallback(async () => {
+        // Если груз уже загружен — ничего не делаем
+        if (hasCargo) return;
+        const { x, y } = agentStateRef.current
+        // Агент может анимироваться и иметь нецелые координаты — округлим до ближайшей клетки
+        const i = Math.round(x)
+        const j = Math.round(y)
+        const nearPickup = isAdjacentToPickup(i, j, mapWidth, mapHeight)
+        if (nearPickup) {
+            await animateSquash({ minScaleY: 0.55 })
+            setHasCargo(true)
+        }
+    }, [hasCargo, animateSquash, mapWidth, mapHeight])
+
+    const dropOff = useCallback(async () => {
+        // Сбрасываем груз только если он есть
+        if (!hasCargo) return;
+        const { x, y } = agentStateRef.current
+        const i = Math.round(x)
+        const j = Math.round(y)
+        const nearDrop = isAdjacentToDropoff(i, j, mapWidth, mapHeight)
+        if (nearDrop) {
+            await animateSquash({ minScaleY: 0.55 })
+            setHasCargo(false)
+        }
+    }, [hasCargo, animateSquash, mapWidth, mapHeight])
 
     const moveBackward = useCallback(async () => {
         const { x, y, direction } = agentStateRef.current
@@ -85,6 +135,8 @@ export function useAgent({
             moveBackward,
             turnLeft,
             turnRight,
+            pickUp,
+            dropOff,
             getPos,
         }
     }

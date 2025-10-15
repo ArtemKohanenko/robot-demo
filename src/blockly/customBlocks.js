@@ -50,6 +50,30 @@ Blockly.Blocks['turn_right'] = {
     }
 };
 
+Blockly.Blocks['pickup'] = {
+    init: function () {
+        this.appendDummyInput().appendField("Pick Up Cargo");
+        this.setInputsInline(false);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(210);
+        this.setTooltip("Pick up cargo (green)");
+        this.setHelpUrl("");
+    }
+};
+
+Blockly.Blocks['dropoff'] = {
+    init: function () {
+        this.appendDummyInput().appendField("Drop Off Cargo");
+        this.setInputsInline(false);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(210);
+        this.setTooltip("Drop off cargo (red)");
+        this.setHelpUrl("");
+    }
+};
+
 Blockly.Blocks['repeat_n_times'] = {
     init: function () {
         this.appendDummyInput()
@@ -81,44 +105,6 @@ Blockly.Blocks['if_then'] = {
         this.setNextStatement(true, null);
         this.setColour(60);
         this.setTooltip("If condition is true, do commands");
-        this.setHelpUrl("");
-    }
-};
-
-Blockly.Blocks['random_number_1_10'] = {
-    init: function () {
-        this.appendDummyInput()
-            .appendField("Random number 1-10");
-        this.setOutput(true, "Number");
-        this.setColour(210);
-        this.setTooltip("Generates a random number from 1 to 10");
-        this.setHelpUrl("");
-    }
-};
-
-Blockly.Blocks['math_compare'] = {
-    init: function () {
-        this.appendValueInput("A")
-            .setCheck("Number");
-        this.appendDummyInput()
-            .appendField(new Blockly.FieldDropdown([["=", "EQ"], [">", "GT"], ["<", "LT"]]), "OPERATOR");
-        this.appendValueInput("B")
-            .setCheck("Number");
-        this.setInputsInline(true);
-        this.setOutput(true, "Boolean");
-        this.setColour(30);
-        this.setTooltip("Compare two numbers");
-        this.setHelpUrl("");
-    }
-};
-
-Blockly.Blocks['number_input'] = {
-    init: function () {
-        this.appendDummyInput()
-            .appendField(new Blockly.FieldNumber(0), "NUM");
-        this.setOutput(true, "Number");
-        this.setColour(200);
-        this.setTooltip("Input a number");
         this.setHelpUrl("");
     }
 };

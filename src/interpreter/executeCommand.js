@@ -13,6 +13,12 @@ export default function executeVirtualRobotCommand(cmd, agentControls) {
     case "TURN_LEFT":
       moveFn = agentControls.turnLeft;
       break;
+    case "PICKUP":
+      moveFn = agentControls.pickUp;
+      break;
+    case "DROPOFF":
+      moveFn = agentControls.dropOff;
+      break;
     default:
       moveFn = null;
   }

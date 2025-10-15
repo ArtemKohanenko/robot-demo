@@ -19,6 +19,14 @@ RobotCommandGenerator["turn_left"] = function (block) {
   const next = RobotCommandGenerator.blockToCode(block.getNextBlock()) || "";
   return "TURN_LEFT\n" + next;
 };
+RobotCommandGenerator["pickup"] = function (block) {
+  const next = RobotCommandGenerator.blockToCode(block.getNextBlock()) || "";
+  return "PICKUP\n" + next;
+};
+RobotCommandGenerator["dropoff"] = function (block) {
+  const next = RobotCommandGenerator.blockToCode(block.getNextBlock()) || "";
+  return "DROPOFF\n" + next;
+};
 RobotCommandGenerator["repeat_n_times"] = function (block) {
   const times = block.getFieldValue("TIMES");
   let branch = RobotCommandGenerator.statementToCode(block, "DO");

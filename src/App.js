@@ -9,31 +9,39 @@ import { useCommandQueue } from "./interpreter/useCommandQueue";
 
 const initialXml = '<xml></xml>';
 const flyoutToolbox = {
-kind: "flyoutToolbox",
-contents: [
+  kind: "flyoutToolbox",
+  contents: [
     {
     kind: "block",
     type: "move_forward",
     },
     {
-    kind: "block",
-    type: "move_backward",
+      kind: "block",
+      type: "move_backward",
     },
     {
-    kind: "block",
-    type: "turn_right",
+      kind: "block",
+      type: "turn_right",
     },
     {
-    kind: "block",
-    type: "turn_left",
+      kind: "block",
+      type: "turn_left",
     },
     {
-    kind: "block",
-    type: "repeat_n_times",
+      kind: "block",
+      type: "pickup",
     },
     {
-    kind: "block",
-    type: "if_then",
+      kind: "block",
+      type: "dropoff",
+    },
+    {
+      kind: "block",
+      type: "repeat_n_times",
+    },
+    {
+      kind: "block",
+      type: "if_then",
     }
   ],
 };

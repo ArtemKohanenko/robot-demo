@@ -53,6 +53,35 @@ function makeInitialGrid() {
 // Единый статический грид для визуализации и коллизий
 const STATIC_GRID = makeInitialGrid();
 
+// Утилита: вернуть тип клетки по логическим координатам (i, j)
+// Возвращает одну из строк CELL.* или null, если вне карты
+export function getCellType(i, j) {
+  if (i < 0 || i >= GRID_W || j < 0 || j >= GRID_H) return null;
+  return STATIC_GRID[j][i]?.type ?? null;
+}
+
+export function isAdjacentToCellType(i, j, type, mapWidth = GRID_W, mapHeight = GRID_H) {
+  const neighbors = [
+    { i: i + 1, j },
+    { i: i - 1, j },
+    { i, j: j + 1 },
+    { i, j: j - 1 }
+  ];
+  for (const { i: ni, j: nj } of neighbors) {
+    if (ni < 0 || ni >= mapWidth || nj < 0 || nj >= mapHeight) continue;
+    if (getCellType(ni, nj) === type) return true;
+  }
+  return false;
+}
+
+export function isAdjacentToPickup(i, j, mapWidth = GRID_W, mapHeight = GRID_H) {
+  return isAdjacentToCellType(i, j, CELL.PICKUP, mapWidth, mapHeight);
+}
+
+export function isAdjacentToDropoff(i, j, mapWidth = GRID_W, mapHeight = GRID_H) {
+  return isAdjacentToCellType(i, j, CELL.DROPOFF, mapWidth, mapHeight);
+}
+
 // Проверка: можно ли заехать в клетку по мировым координатам агента (логические X,Y)
 export function canEnterWorld(x, y) {
   // Преобразуем мировые координаты центра клетки в индексы сетки

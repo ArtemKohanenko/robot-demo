@@ -6,7 +6,7 @@ import { useAgent } from './useAgent';
 import { Map } from './Map'
 
 
-function Agent({ x, y, radius, direction }) {
+function Agent({ x, y, radius, direction, scaleY = 1 }) {
   // Направление: 0 - вверх, 1 - вправо, 2 - вниз, 3 - влево
   // Для объёма вращаем вокруг оси Y (движение в XZ-плоскости)
   const rotationY = direction * (-Math.PI / 2) + Math.PI / 2;
@@ -14,7 +14,7 @@ function Agent({ x, y, radius, direction }) {
   const height = radius * 2; // высота по Y
   return (
     // Агент рендерится в XZ-плоскости (y — высота)
-    <group position={[x, height / 2, y]} rotation={[0, rotationY, 0]}>
+    <group position={[x, height / 2, y]} rotation={[0, rotationY, 0]} scale={[1, scaleY, 1]}>
       <mesh>
         <boxGeometry args={[size, height, size]} />
         <meshStandardMaterial color="#d9534f" />
@@ -222,6 +222,7 @@ export function Scene() {
             y={(mapHeight - 1 - agentState.y) + 0.5}
             radius={agentRadius}
             direction={agentState.direction}
+            scaleY={agentState.scaleY}
           />
         </Canvas>
       </Suspense>
