@@ -28,7 +28,7 @@ function Agent({ x, y, radius, direction }) {
   )
 }
 
-function IsometricCamera({ width, height, margin = 1.35 }) {
+function IsometricCamera({ width, height, margin = 1.35, minZoom = 0.5, maxZoom = 200 }) {
   const { camera, size } = useThree();
   useEffect(() => {
     const targetX = width / 2;
@@ -46,15 +46,17 @@ function IsometricCamera({ width, height, margin = 1.35 }) {
     const desiredWorldHeight = height * margin;
     const zoomByHeight = size.height / desiredWorldHeight;
     const zoomByWidth = size.width / desiredWorldWidth;
-    camera.zoom = Math.min(zoomByHeight, zoomByWidth);
+    const computedZoom = Math.min(zoomByHeight, zoomByWidth);
+    // Клэмпим стартовый зум, чтобы он попадал в допустимые границы контролов
+    camera.zoom = Math.max(minZoom, Math.min(maxZoom, computedZoom));
     camera.updateProjectionMatrix();
-  }, [camera, size.width, size.height, width, height, margin]);
+  }, [camera, size.width, size.height, width, height, margin, minZoom, maxZoom]);
   return null;
 }
 
 // Управление ортографической камерой: колесо — зум, панорамирование — правая кнопка
 // или Shift+левая. Вращение отключено.
-function OrthoPanZoomControls({ minZoom = 0.5, maxZoom = 8, zoomSpeed = 1.1 }) {
+function OrthoPanZoomControls({ minZoom = 0.5, maxZoom = 200, zoomSpeed = 1.1 }) {
   const { camera, gl, size } = useThree();
   const isPanningRef = useRef(false);
   const lastPointerRef = useRef({ x: 0, y: 0 });
@@ -188,6 +190,8 @@ export function Scene() {
   const mapWidth = 8;
   const mapHeight = 8;
   const agentRadius = 0.5;
+  const minZoom = 0.5;
+  const maxZoom = 200;
 
   const {
     agentState,
@@ -204,8 +208,8 @@ export function Scene() {
           {/* освещение для 3D-объектов */}
           <ambientLight intensity={0.6} />
           <directionalLight position={[5, 10, 5]} intensity={0.8} />
-          <IsometricCamera width={mapWidth} height={mapHeight} />
-          <OrthoPanZoomControls />
+          <IsometricCamera width={mapWidth} height={mapHeight} minZoom={minZoom} maxZoom={maxZoom} />
+          <OrthoPanZoomControls minZoom={minZoom} maxZoom={maxZoom} />
           <Map width={mapWidth} height={mapHeight} />
           {
             // Логические координаты теперь целочисленные индексы (i, j) в диапазонах

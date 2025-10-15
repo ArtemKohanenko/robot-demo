@@ -109,20 +109,22 @@ function GridVisual({ grid }) {
             </mesh>
           );
         } else if (cell.type === CELL.PICKUP) {
-          // маркер пункта получения — зелёный цилиндр и метка
+          const h = 0.12;
+          const r = 0.35;
           cells.push(
-            <group key={`pickup-${i}-${j}`} position={[world.x, 0.05, world.z]}>
-              <cylinderGeometry args={[0.18, 0.18, 0.12, 16]} />
-              <meshStandardMaterial attach="material" color="#2ecc71" />
-            </group>
+            <mesh key={`pickup-${i}-${j}`} position={[world.x, h / 2, world.z]}>
+              <cylinderGeometry args={[r, r, h, 24]} />
+              <meshStandardMaterial color="#2ecc71" />
+            </mesh>
           );
         } else if (cell.type === CELL.DROPOFF) {
-          // маркер сдачи — конус / тор
+          const h = 0.12;
+          const r = 0.35;
           cells.push(
-            <group key={`drop-${i}-${j}`} position={[world.x, 0.05, world.z]}>
-              <coneGeometry args={[0.18, 0.25, 16]} />
+            <mesh key={`drop-${i}-${j}`} position={[world.x, h / 2, world.z]}>
+              <cylinderGeometry args={[r, r, h, 24]} />
               <meshStandardMaterial color="#e76f51" />
-            </group>
+            </mesh>
           );
         }
       }
