@@ -3,8 +3,9 @@ import Blockly from "blockly";
 const RobotCommandGenerator = new Blockly.Generator("RobotCommandGenerator");
 RobotCommandGenerator.ORDER_ATOMIC = 0;
 RobotCommandGenerator["move_forward"] = function (block) {
+  const cells = block.getFieldValue("CELLS");
   const next = RobotCommandGenerator.blockToCode(block.getNextBlock()) || "";
-  return "MOVE_FORWARD\n" + next;
+  return `MOVE_FORWARD ${cells}\n` + next;
 };
 RobotCommandGenerator["move_backward"] = function (block) {
   const next = RobotCommandGenerator.blockToCode(block.getNextBlock()) || "";
@@ -26,6 +27,11 @@ RobotCommandGenerator["pickup"] = function (block) {
 RobotCommandGenerator["dropoff"] = function (block) {
   const next = RobotCommandGenerator.blockToCode(block.getNextBlock()) || "";
   return "DROPOFF\n" + next;
+};
+RobotCommandGenerator["wait"] = function (block) {
+  const seconds = block.getFieldValue("SECONDS");
+  const next = RobotCommandGenerator.blockToCode(block.getNextBlock()) || "";
+  return `WAIT ${seconds}\n` + next;
 };
 RobotCommandGenerator["repeat_n_times"] = function (block) {
   const times = block.getFieldValue("TIMES");

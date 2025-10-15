@@ -4,7 +4,10 @@ import 'blockly/python';
 
 Blockly.Blocks['move_forward'] = {
     init: function () {
-        this.appendDummyInput().appendField("Move Forward");
+        this.appendDummyInput()
+        .appendField("Move forward on")
+        .appendField(new Blockly.FieldNumber(1, 1, 100, 1), "CELLS")
+        .appendField("steps");
         this.setInputsInline(false);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
@@ -70,6 +73,21 @@ Blockly.Blocks['dropoff'] = {
         this.setNextStatement(true, null);
         this.setColour(210);
         this.setTooltip("Drop off cargo (red)");
+        this.setHelpUrl("");
+    }
+};
+
+Blockly.Blocks['wait'] = {
+    init: function () {
+        this.appendDummyInput()
+        .appendField("Wait")
+        .appendField(new Blockly.FieldNumber(1, 1, 100, 1), "SECONDS")
+        .appendField("seconds");
+        this.setInputsInline(false);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(330);
+        this.setTooltip("Wait some seconds");
         this.setHelpUrl("");
     }
 };

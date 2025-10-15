@@ -37,6 +37,10 @@ const flyoutToolbox = {
     },
     {
       kind: "block",
+      type: "wait",
+    },
+    {
+      kind: "block",
       type: "repeat_n_times",
     },
     {

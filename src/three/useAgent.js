@@ -67,18 +67,21 @@ export function useAgent({
         setAgentState({ ...from, scaleY: 1 })
     }, [steps, duration])
 
-    const moveForward = useCallback(async () => {
-        const { x, y, direction } = agentStateRef.current
-        const { dx, dy } = DIRECTIONS[direction]
-        const newX = x + dx
-        const newY = y + dy
-        if (canEnterLogical(newX, newY, mapWidth, mapHeight)) {
+    const moveForward = useCallback(async (numSteps = 1) => {
+        const totalSteps = Math.max(1, Number.isFinite(numSteps) ? Math.floor(numSteps) : 1)
+        for (let i = 0; i < totalSteps; i++) {
+            const { x, y, direction } = agentStateRef.current
+            const { dx, dy } = DIRECTIONS[direction]
+            const newX = x + dx
+            const newY = y + dy
+            if (!canEnterLogical(newX, newY, mapWidth, mapHeight)) break
             await animateMove({ x: newX, y: newY, direction })
+            const stepPauseMs = Math.max(50, Math.floor(duration / 3))
+            await new Promise(res => setTimeout(res, stepPauseMs))
         }
-    }, [animateMove, mapWidth, mapHeight])
+    }, [animateMove, mapWidth, mapHeight, duration])
 
     const pickUp = useCallback(async () => {
-        // Если груз уже загружен — ничего не делаем
         if (hasCargo) return;
         const { x, y } = agentStateRef.current
         // Агент может анимироваться и иметь нецелые координаты — округлим до ближайшей клетки
@@ -92,7 +95,6 @@ export function useAgent({
     }, [hasCargo, animateSquash, mapWidth, mapHeight])
 
     const dropOff = useCallback(async () => {
-        // Сбрасываем груз только если он есть
         if (!hasCargo) return;
         const { x, y } = agentStateRef.current
         const i = Math.round(x)
