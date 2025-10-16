@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { canEnterLogical, isAdjacentToPickup, isAdjacentToDropoff } from './Map'
+import { useLevel } from '../state/levelContext'
 
 const DIRECTIONS = [
     { dx: 0, dy: 1 },   // 0 - вверх
@@ -17,6 +17,7 @@ export function useAgent({
     steps = 20,
     duration = 300
 } = {}) {
+    const { grid, canEnterLogical, isAdjacentToPickup, isAdjacentToDropoff } = useLevel();
     const [agentState, setAgentState] = useState(() => ({
         // Логические координаты: целочисленные индексы клеток сетки (i, j)
         // По умолчанию стартуем в левом нижнем углу карты
@@ -74,12 +75,12 @@ export function useAgent({
             const { dx, dy } = DIRECTIONS[direction]
             const newX = x + dx
             const newY = y + dy
-            if (!canEnterLogical(newX, newY, mapWidth, mapHeight)) break
+            if (!canEnterLogical(newX, newY)) break
             await animateMove({ x: newX, y: newY, direction })
             const stepPauseMs = Math.max(50, Math.floor(duration / 3))
             await new Promise(res => setTimeout(res, stepPauseMs))
         }
-    }, [animateMove, mapWidth, mapHeight, duration])
+    }, [animateMove, duration, canEnterLogical])
 
     const pickUp = useCallback(async () => {
         if (hasCargo) return;
@@ -87,24 +88,25 @@ export function useAgent({
         // Агент может анимироваться и иметь нецелые координаты — округлим до ближайшей клетки
         const i = Math.round(x)
         const j = Math.round(y)
-        const nearPickup = isAdjacentToPickup(i, j, mapWidth, mapHeight)
+        const nearPickup = isAdjacentToPickup(i, j)
         if (nearPickup) {
             await animateSquash({ minScaleY: 0.55 })
             setHasCargo(true)
         }
-    }, [hasCargo, animateSquash, mapWidth, mapHeight])
+    }, [hasCargo, animateSquash, isAdjacentToPickup])
 
     const dropOff = useCallback(async () => {
         if (!hasCargo) return;
         const { x, y } = agentStateRef.current
         const i = Math.round(x)
         const j = Math.round(y)
-        const nearDrop = isAdjacentToDropoff(i, j, mapWidth, mapHeight)
+        const nearDrop = isAdjacentToDropoff(i, j)
         if (nearDrop) {
             await animateSquash({ minScaleY: 0.55 })
             setHasCargo(false)
+            alert("🎉 Поздравляем! Уровень пройден! 🎉")
         }
-    }, [hasCargo, animateSquash, mapWidth, mapHeight])
+    }, [hasCargo, animateSquash, isAdjacentToDropoff])
 
     const moveBackward = useCallback(async (numSteps = 1) => {
         const totalSteps = Math.max(1, Number.isFinite(numSteps) ? Math.floor(numSteps) : 1)
@@ -113,12 +115,12 @@ export function useAgent({
             const { dx, dy } = DIRECTIONS[direction]
             const newX = x - dx
             const newY = y - dy
-            if (!canEnterLogical(newX, newY, mapWidth, mapHeight)) break
+            if (!canEnterLogical(newX, newY)) break
             await animateMove({ x: newX, y: newY, direction })
             const stepPauseMs = Math.max(50, Math.floor(duration / 3))
             await new Promise(res => setTimeout(res, stepPauseMs))
         }
-    }, [animateMove, mapWidth, mapHeight, duration])
+    }, [animateMove, duration, canEnterLogical])
 
     const turnLeft = useCallback(async () => {
         const { x, y, direction } = agentStateRef.current

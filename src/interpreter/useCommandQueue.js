@@ -1,7 +1,9 @@
 import React from 'react';
 import { agentControls } from '../state/agentContext'
+import { useLevel } from '../state/levelContext'
 
 export function useCommandQueue(executor) {
+  const { isWallAt } = useLevel();
   const [state, setState] = React.useState({
     queue: [],
     current: null,
@@ -86,7 +88,7 @@ export function useCommandQueue(executor) {
     };
     cancelCurrentRef.current = cancelFunc;
 
-    executor(next, agentControls)
+    executor(next, agentControls, isWallAt)
       .then(() => {
         if (canceled) return;
         cancelCurrentRef.current = null;
@@ -97,7 +99,7 @@ export function useCommandQueue(executor) {
         cancelCurrentRef.current = null;
         setState(prev => ({ ...prev, status: "error", error: err }));
       });
-  }, [state, executor]);
+  }, [state, executor, isWallAt]);
 
   return [state, { enqueue, setQueue, start, pause, resume, stop, run }];
 }

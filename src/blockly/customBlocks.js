@@ -1,7 +1,6 @@
 import Blockly from 'blockly';
 import 'blockly/python';
 
-
 Blockly.Blocks['move_forward'] = {
     init: function () {
         this.appendDummyInput()

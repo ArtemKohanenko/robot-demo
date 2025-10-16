@@ -4,6 +4,7 @@ import React, { Suspense, useEffect, useRef, useCallback } from 'react'
 import { AgentContext, agentControls } from '../state/agentContext'
 import { useAgent } from './useAgent';
 import { Map } from './Map'
+import { useLevel } from '../state/levelContext'
 
 
 function Agent({ x, y, radius, direction, scaleY = 1 }) {
@@ -185,14 +186,8 @@ function OrthoPanZoomControls({ minZoom = 0.5, maxZoom = 200, zoomSpeed = 1.1 })
   return null;
 }
 
-export function Scene() {
-  // Размеры карты должны совпадать с сеткой в Map (GRID_W x GRID_H)
-  const mapWidth = 8;
-  const mapHeight = 8;
-  const agentRadius = 0.5;
-  const minZoom = 0.5;
-  const maxZoom = 200;
-
+function SceneContent({ mapWidth, mapHeight, agentRadius, minZoom, maxZoom }) {
+  const { grid, gridToWorld } = useLevel();
   const {
     agentState,
     agentControls: controlsFromHook
@@ -210,7 +205,7 @@ export function Scene() {
           <directionalLight position={[5, 10, 5]} intensity={0.8} />
           <IsometricCamera width={mapWidth} height={mapHeight} minZoom={minZoom} maxZoom={maxZoom} />
           <OrthoPanZoomControls minZoom={minZoom} maxZoom={maxZoom} />
-          <Map width={mapWidth} height={mapHeight} />
+          <Map width={mapWidth} height={mapHeight} grid={grid} gridToWorld={gridToWorld} />
           {
             // Логические координаты теперь целочисленные индексы (i, j) в диапазонах
             // i: [0..mapWidth-1], j: [0..mapHeight-1]
@@ -227,5 +222,24 @@ export function Scene() {
         </Canvas>
       </Suspense>
     </AgentContext.Provider>
+  );
+}
+
+export function Scene() {
+  // Размеры карты должны совпадать с сеткой в Map (GRID_W x GRID_H)
+  const mapWidth = 8;
+  const mapHeight = 8;
+  const agentRadius = 0.5;
+  const minZoom = 0.5;
+  const maxZoom = 200;
+
+  return (
+    <SceneContent 
+      mapWidth={mapWidth} 
+      mapHeight={mapHeight} 
+      agentRadius={agentRadius} 
+      minZoom={minZoom} 
+      maxZoom={maxZoom} 
+    />
   )
 }

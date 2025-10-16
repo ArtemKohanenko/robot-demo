@@ -1,8 +1,7 @@
-import { isWallAt } from "../three/Map";
 
 const ifStack = [];
 
-export default function executeVirtualRobotCommand(cmd, agentControls) {
+export default function executeVirtualRobotCommand(cmd, agentControls, isWallAt) {
   const text = String(cmd).trim();
 
   // Сперва обрабатываем управляющие конструкции IF/END_IF

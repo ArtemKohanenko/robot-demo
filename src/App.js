@@ -6,6 +6,7 @@ import { Scene } from "./three/Scene";
 import RobotCommandGenerator from "./blockly/robotCommandGenerator";
 import executeCommand from "./interpreter/executeCommand";
 import { useCommandQueue } from "./interpreter/useCommandQueue";
+import { LevelProvider } from "./state/levelContext";
 
 const initialXml = '<xml></xml>';
 const flyoutToolbox = {
@@ -54,7 +55,7 @@ const flyoutToolbox = {
   ],
 };
 
-export default function App() {
+function AppContent() {
   const workspaceRef = useRef(null);
 
   const [state, api] = useCommandQueue(executeCommand);
@@ -72,6 +73,7 @@ export default function App() {
           initialXml={initialXml}
           className="fill-height blockly-workspace-container"
           workspaceConfiguration={{
+            renderer: 'thrasos',
             grid: {
               spacing: 20,
               length: 3,
@@ -106,5 +108,13 @@ export default function App() {
           }>{state.status === "running" ? "Waiting..." : "Execute"}</button>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LevelProvider>
+      <AppContent />
+    </LevelProvider>
   );
 }
