@@ -21,9 +21,7 @@ function GridVisual({ grid, mapWidth = GRID_W, mapHeight = GRID_H, gridToWorld }
           rotation={[-Math.PI / 2, 0, 0]}
         >
           <planeGeometry args={[CELL_SIZE * 0.98, CELL_SIZE * 0.98]} />
-          <meshBasicMaterial
-            map={grassTexture}
-          />
+          <meshBasicMaterial map={grassTexture} />
         </mesh>
       );
 

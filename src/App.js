@@ -6,9 +6,7 @@ import { Scene } from "./three/Scene";
 import RobotCommandGenerator from "./blockly/robotCommandGenerator";
 import executeCommand from "./interpreter/executeCommand";
 import { useCommandQueue } from "./interpreter/useCommandQueue";
-import { LevelProvider } from "./state/levelContext";
-
-const initialXml = '<xml></xml>';
+import { LevelProvider, useLevel } from "./state/levelContext";
 const flyoutToolbox = {
   kind: "flyoutToolbox",
   contents: [
@@ -57,6 +55,8 @@ const flyoutToolbox = {
 
 function AppContent() {
   const workspaceRef = useRef(null);
+  const { updateAlgorithmConfig, initAlgorithmConfig } = useLevel();
+  const initXmlAlgorithmConfig = initAlgorithmConfig();
 
   const [state, api] = useCommandQueue(executeCommand);
 
@@ -70,7 +70,8 @@ function AppContent() {
       <BlocklyWorkspace
           key="flyout-only"
           toolboxConfiguration={flyoutToolbox}
-          initialXml={initialXml}
+          initialXml={initXmlAlgorithmConfig}
+          onXmlChange={updateAlgorithmConfig}
           className="fill-height blockly-workspace-container"
           workspaceConfiguration={{
             renderer: 'thrasos',

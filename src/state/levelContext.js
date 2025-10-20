@@ -1,5 +1,6 @@
 import React from "react";
 import * as THREE from "three";
+import { getLevelState, saveLevelState, deleteLevelState } from "../db/db";
 
 export const GRID_W = 8;
 export const GRID_H = 8;
@@ -27,12 +28,45 @@ export function makeInitialGrid() {
   return g;
 }
 
-
+function isEmptyXml(xmlConfig) {
+  const trimmedXml = xmlConfig.trim();
+  
+  // Проверяем через regexp, что XML содержит только теги <xml></xml> без вложенных блоков
+  // Разрешаем параметры в тегах, но не вложенные блоки
+  const emptyXmlRegex = /^<xml[^>]*><\/xml>$/;
+  
+  return trimmedXml === '' || emptyXmlRegex.test(trimmedXml);
+}
 
 const LevelContext = React.createContext(null);
 
-export function LevelProvider({ children }) {
+export function LevelProvider({ children, levelId = 1 }) {
   const [grid, setGrid] = React.useState(makeInitialGrid);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [xmlAlgorithmConfig, setXmlAlgorithmConfig] = React.useState('<xml></xml>');
+
+  // Загрузка данных уровня из базы данных при инициализации
+  React.useEffect(() => {
+    const loadLevelData = async () => {
+      try {
+        setIsLoading(true);
+        const levelData = await getLevelState(levelId);
+        if (levelData) {
+          if (levelData.gridJson) {
+            setGrid(levelData.gridJson);
+          }
+          localStorage.getItem(`SavedAlgorithm/Level-${levelId}`);
+          setXmlAlgorithmConfig(xmlAlgorithmConfig);
+        }
+      } catch (error) {
+        console.error("Ошибка при загрузке данных уровня:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadLevelData();
+  }, [levelId]);
 
   // Утилиты, которые используют значения из контекста
   const contextUtils = {
@@ -91,6 +125,44 @@ export function LevelProvider({ children }) {
       if (i < 0 || i >= GRID_W || j < 0 || j >= GRID_H) return false;
       const cellType = grid[j][i]?.type ?? null;
       return cellType === CELL.WALL;
+    },
+
+    // Сброс уровня к начальному состоянию
+    resetLevel: async () => {
+      try {
+        await deleteLevelState(levelId);
+        setGrid(makeInitialGrid());
+        setXmlAlgorithmConfig('<xml></xml>');
+        return true;
+      } catch (error) {
+        console.error("Ошибка при сбросе уровня:", error);
+        return false;
+      }
+    },
+
+    initAlgorithmConfig: () => {
+      let levelId = localStorage.getItem(`CurrentLevel`);
+      if (!levelId) {
+        levelId = 1
+        localStorage.setItem(`CurrentLevel`, 1);
+      }
+      
+      let xmlConfig = localStorage.getItem(`SavedAlgorithm/Level-${levelId}`);
+      if (!xmlConfig) {
+        localStorage.setItem(`SavedAlgorithm/Level-${levelId}`, '<xml></xml>');
+        xmlConfig = '<xml></xml>';
+      }
+      
+      return xmlConfig;
+    },
+
+    updateAlgorithmConfig: (xmlConfig) => {
+      let levelId = localStorage.getItem(`CurrentLevel`);
+      if (!levelId) {
+        return;
+      }
+      
+      localStorage.setItem(`SavedAlgorithm/Level-${levelId}`, xmlConfig);
     }
   };
 
@@ -102,7 +174,14 @@ export function LevelProvider({ children }) {
   };
 
   return (
-    <LevelContext.Provider value={{ grid, setGrid, ...levelUtils }}>
+    <LevelContext.Provider value={{ 
+      grid, 
+      setGrid, 
+      xmlAlgorithmConfig,
+      isLoading,
+      levelId,
+      ...levelUtils 
+    }}>
       {children}
     </LevelContext.Provider>
   );
@@ -115,5 +194,3 @@ export function useLevel() {
   }
   return context;
 }
-
-

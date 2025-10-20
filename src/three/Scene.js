@@ -200,9 +200,8 @@ function SceneContent({ mapWidth, mapHeight, agentRadius, minZoom, maxZoom }) {
     <AgentContext.Provider value={{ agentState }}>
       <Suspense fallback={<span>Загрузка...</span>}>
         <Canvas orthographic>
-          {/* освещение для 3D-объектов */}
-          <ambientLight intensity={0.6} />
-          <directionalLight position={[5, 10, 5]} intensity={0.8} />
+          <ambientLight intensity={0.8} />
+          <directionalLight position={[5, 5, 5]} intensity={0.5} />
           <IsometricCamera width={mapWidth} height={mapHeight} minZoom={minZoom} maxZoom={maxZoom} />
           <OrthoPanZoomControls minZoom={minZoom} maxZoom={maxZoom} />
           <Map width={mapWidth} height={mapHeight} grid={grid} gridToWorld={gridToWorld} />
