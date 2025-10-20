@@ -1,190 +1,146 @@
-import { Canvas, useThree, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import React, { Suspense, useEffect, useRef, useCallback } from 'react'
+import React, { Suspense, useEffect, useRef, useState } from 'react'
+import PropTypes from 'prop-types'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { AgentContext, agentControls } from '../state/agentContext'
 import { useAgent } from './useAgent';
 import { Map } from './Map'
 import { useLevel } from '../state/levelContext'
+import { IsometricCamera, OrthoPanZoomControls, DEFAULT_MIN_ZOOM, DEFAULT_MAX_ZOOM } from './Camera'
 
 
-function Agent({ x, y, radius, direction, scaleY = 1 }) {
+// Константы карты по умолчанию  
+const DEFAULT_MAP_WIDTH = 8;
+const DEFAULT_MAP_HEIGHT = 8;
+const DEFAULT_AGENT_RADIUS = 0.5;
+
+// Компонент скайбокса
+function Skybox() {
+  const meshRef = useRef();
+  
+  useEffect(() => {
+    const loader = new THREE.TextureLoader();
+    loader.load('/textures/sky_22_2k.png', (texture) => {
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+      if (meshRef.current) {
+        meshRef.current.material.map = texture;
+        meshRef.current.material.needsUpdate = true;
+      }
+    });
+  }, []);
+
+  return (
+    <mesh ref={meshRef}>
+      <sphereGeometry args={[500, 60, 40]} />
+      <meshBasicMaterial side={THREE.BackSide} />
+    </mesh>
+  );
+}
+
+
+function Agent({ x, y, radius, direction, scaleY = 1, isMoving = false }) {
+  const [model, setModel] = useState(null);
+  const [mixer, setMixer] = useState(null);
+  const [actions, setActions] = useState({});
+  const groupRef = useRef();
+
+  // Загрузка модели и анимаций
+  useEffect(() => {
+    const loader = new GLTFLoader();
+    loader.load(
+      '/models/Fox.glb',
+      (gltf) => {
+        // Масштабируем модель так, чтобы её длина была 1 единица
+        const box = new THREE.Box3().setFromObject(gltf.scene);
+        const size = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = 1 / maxDim; // 1 единица длины
+        
+        gltf.scene.scale.set(scale, scale, scale);
+        
+        // Центрируем модель
+        box.setFromObject(gltf.scene);
+        const center = box.getCenter(new THREE.Vector3());
+        gltf.scene.position.sub(center);
+        
+        setModel(gltf.scene);
+
+        // Инициализируем анимации, если они есть
+        if (gltf.animations && gltf.animations.length > 0) {
+          const animMixer = new THREE.AnimationMixer(gltf.scene);
+          const animActions = {};
+
+          // Загружаем все анимации
+          gltf.animations.forEach((clip) => {
+            const action = animMixer.clipAction(clip);
+            animActions[clip.name] = action;
+          });
+
+          setMixer(animMixer);
+          setActions(animActions);
+
+          console.log('Доступные анимации:', Object.keys(animActions));
+        } else {
+          console.warn('Анимации не найдены в модели Fox.glb');
+        }
+      },
+      undefined,
+      (error) => {
+        console.error('Ошибка загрузки модели Fox.glb:', error);
+      }
+    );
+  }, [radius]);
+
+  // Управление анимациями в зависимости от состояния движения
+  useEffect(() => {
+    if (!mixer || Object.keys(actions).length === 0) return;
+
+    // Ищем анимацию ходьбы/бега (обычно называется Walk, Run, или Survey)
+    const walkAction = actions['Walk'] || actions['Run'] || actions['Survey'] || Object.values(actions)[0];
+
+    if (isMoving) {
+      // Включаем анимацию ходьбы
+      walkAction?.fadeIn(0.2);
+    } else {
+      // Выключаем анимацию ходьбы
+      walkAction?.fadeOut(0.2);
+    }
+
+    return () => {
+      // Очистка при размонтировании
+      walkAction?.stop();
+    };
+  }, [isMoving, mixer, actions]);
+
+  // Обновляем mixer каждый кадр
+  useFrame((state, delta) => {
+    if (mixer) {
+      mixer.update(delta);
+    }
+  });
+
   // Направление: 0 - вверх, 1 - вправо, 2 - вниз, 3 - влево
   // Для объёма вращаем вокруг оси Y (движение в XZ-плоскости)
   const rotationY = direction * (-Math.PI / 2) + Math.PI / 2;
-  const size = radius * 2; // габарит по XZ
-  const height = radius * 2; // высота по Y
+  const height = radius * 2;
+
   return (
     // Агент рендерится в XZ-плоскости (y — высота)
-    <group position={[x, height / 2, y]} rotation={[0, rotationY, 0]} scale={[1, scaleY, 1]}>
-      <mesh>
-        <boxGeometry args={[size, height, size]} />
-        <meshStandardMaterial color="#d9534f" />
-      </mesh>
-      {/* небольшой индикатор направления спереди */}
-      <mesh position={[size * 0.6, 0, 0]}>
-        <boxGeometry args={[size * 0.2, height * 0.2, size * 0.2]} />
-        <meshStandardMaterial color="#f1c40f" />
-      </mesh>
+    <group ref={groupRef} position={[x, height / 2, y]} rotation={[0, rotationY, 0]} scale={[1, scaleY, 1]}>
+      {model ? (
+        // Внутренняя группа для коррекции ориентации модели
+        // Math.PI/2 компенсирует поворот модели на 90° против часовой стрелки
+        <group rotation={[0, Math.PI / 2, 0]}>
+          <primitive object={model} />
+        </group>
+      ) : null}
     </group>
-  )
+  );
 }
 
-function IsometricCamera({ width, height, margin = 1.35, minZoom = 0.5, maxZoom = 200 }) {
-  const { camera, size } = useThree();
-  useEffect(() => {
-    const targetX = width / 2;
-    const targetZ = height / 2;
-    const longest = Math.max(width, height);
-    // позиционируем камеру по изометрии (равные компоненты X,Z и высота)
-    const dist = longest * 1.2;
-    camera.position.set(dist, dist, dist);
-    camera.near = 0.1;
-    camera.far = 1000;
-    camera.lookAt(targetX, 0, targetZ);
-    // подгоняем zoom так, чтобы вся карта влезала целиком с отступом
-    // Для ортографической камеры видимые размеры мира ~ size.{width,height} / zoom
-    const desiredWorldWidth = width * margin;
-    const desiredWorldHeight = height * margin;
-    const zoomByHeight = size.height / desiredWorldHeight;
-    const zoomByWidth = size.width / desiredWorldWidth;
-    const computedZoom = Math.min(zoomByHeight, zoomByWidth);
-    // Клэмпим стартовый зум, чтобы он попадал в допустимые границы контролов
-    camera.zoom = Math.max(minZoom, Math.min(maxZoom, computedZoom));
-    camera.updateProjectionMatrix();
-  }, [camera, size.width, size.height, width, height, margin, minZoom, maxZoom]);
-  return null;
-}
 
-// Управление ортографической камерой: колесо — зум, панорамирование — правая кнопка
-// или Shift+левая. Вращение отключено.
-function OrthoPanZoomControls({ minZoom = 0.5, maxZoom = 200, zoomSpeed = 1.1 }) {
-  const { camera, gl, size } = useThree();
-  const isPanningRef = useRef(false);
-  const lastPointerRef = useRef({ x: 0, y: 0 });
-  const targetRef = useRef(new THREE.Vector3());
 
-  // Инициализируем целевую точку там, куда сейчас смотрит камера
-  useEffect(() => {
-    const dir = new THREE.Vector3();
-    camera.getWorldDirection(dir);
-    // Цель — пересечение луча взгляда с плоскостью Y=0 (земля)
-    // t из уравнения camera.position + dir * t, при условии y=0
-    const t = -camera.position.y / dir.y;
-    const look = new THREE.Vector3().copy(camera.position).add(dir.multiplyScalar(t));
-    if (Number.isFinite(look.x)) targetRef.current.copy(look);
-  }, [camera]);
-
-  const updateLookAt = useCallback(() => {
-    camera.lookAt(targetRef.current);
-  }, [camera]);
-
-  // Масштаб: 1px в экранных координатах соответствует 1/camera.zoom мировых единиц
-  const pixelToWorld = useCallback(() => 1 / camera.zoom, [camera.zoom]);
-
-  const onWheel = useCallback((e) => {
-    e.preventDefault();
-    const factor = e.deltaY < 0 ? zoomSpeed : 1 / zoomSpeed;
-    const newZoom = Math.max(minZoom, Math.min(maxZoom, camera.zoom * factor));
-
-    // Зум относительно курсора: смещаем target так, чтобы под курсором оставалась та же точка
-    // Нормализуем координаты курсора в NDC [-1..1]
-    const rect = gl.domElement.getBoundingClientRect();
-    const ndcX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    const ndcY = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-
-    // Направления в мировых координатах для экранных осей
-    const dir = new THREE.Vector3();
-    camera.getWorldDirection(dir);
-    const right = new THREE.Vector3().copy(dir).cross(camera.up).normalize();
-    const upScreen = new THREE.Vector3().copy(right).cross(dir).normalize();
-
-    // Текущая половина видимой ширины/высоты в мировых единицах
-    const halfWorldW = (size.width / camera.zoom) / 2;
-    const halfWorldH = (size.height / camera.zoom) / 2;
-    const worldPointBefore = new THREE.Vector3()
-      .copy(targetRef.current)
-      .add(right.multiplyScalar(ndcX * halfWorldW))
-      .add(upScreen.multiplyScalar(ndcY * halfWorldH));
-
-    camera.zoom = newZoom;
-    camera.updateProjectionMatrix();
-
-    const halfWorldW2 = (size.width / camera.zoom) / 2;
-    const halfWorldH2 = (size.height / camera.zoom) / 2;
-    const dir2 = new THREE.Vector3();
-    camera.getWorldDirection(dir2);
-    const right2 = new THREE.Vector3().copy(dir2).cross(camera.up).normalize();
-    const upScreen2 = new THREE.Vector3().copy(right2).cross(dir2).normalize();
-    const worldPointAfter = new THREE.Vector3()
-      .copy(targetRef.current)
-      .add(right2.multiplyScalar(ndcX * halfWorldW2))
-      .add(upScreen2.multiplyScalar(ndcY * halfWorldH2));
-
-    // Сместим target так, чтобы worldPoint совпал
-    const delta = new THREE.Vector3().subVectors(worldPointBefore, worldPointAfter);
-    targetRef.current.add(delta);
-    camera.position.add(delta);
-    updateLookAt();
-  }, [camera, gl.domElement, size.width, size.height, zoomSpeed, minZoom, maxZoom, updateLookAt]);
-
-  const onPointerDown = useCallback((e) => {
-    // панорамирование: левая кнопка мыши (удержание и перетаскивание)
-    if (e.button === 0) {
-      isPanningRef.current = true;
-      lastPointerRef.current = { x: e.clientX, y: e.clientY };
-    }
-  }, []);
-
-  const onPointerMove = useCallback((e) => {
-    if (!isPanningRef.current) return;
-    const dx = e.clientX - lastPointerRef.current.x;
-    const dy = e.clientY - lastPointerRef.current.y;
-    lastPointerRef.current = { x: e.clientX, y: e.clientY };
-
-    const scale = pixelToWorld();
-    const dir = new THREE.Vector3();
-    camera.getWorldDirection(dir);
-    const right = new THREE.Vector3().copy(dir).cross(camera.up).normalize();
-    const upScreen = new THREE.Vector3().copy(right).cross(dir).normalize();
-
-    const delta = new THREE.Vector3()
-      .addScaledVector(right, -dx * scale)
-      .addScaledVector(upScreen, dy * scale);
-
-    targetRef.current.add(delta);
-    camera.position.add(delta);
-    updateLookAt();
-  }, [camera, pixelToWorld, updateLookAt]);
-
-  const onPointerUp = useCallback(() => {
-    isPanningRef.current = false;
-  }, []);
-
-  useEffect(() => {
-    const el = gl.domElement;
-    el.addEventListener('wheel', onWheel, { passive: false });
-    el.addEventListener('pointerdown', onPointerDown);
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-    // отключаем контекстное меню, чтобы не мешало панорамированию правой кнопкой
-    const onCtx = (e) => e.preventDefault();
-    el.addEventListener('contextmenu', onCtx);
-    return () => {
-      el.removeEventListener('wheel', onWheel);
-      el.removeEventListener('pointerdown', onPointerDown);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-      el.removeEventListener('contextmenu', onCtx);
-    };
-  }, [gl.domElement, onWheel, onPointerDown, onPointerMove, onPointerUp]);
-
-  useFrame(() => {
-    // держим «up» вертикально, исключая вращение камеры
-    camera.up.set(0, 1, 0);
-  });
-
-  return null;
-}
 
 function SceneContent({ mapWidth, mapHeight, agentRadius, minZoom, maxZoom }) {
   const { grid, gridToWorld } = useLevel();
@@ -193,13 +149,21 @@ function SceneContent({ mapWidth, mapHeight, agentRadius, minZoom, maxZoom }) {
     agentControls: controlsFromHook
   } = useAgent({ mapWidth, mapHeight, agentRadius });
 
-  // Прокидываем методы управления в глобальный объект
+  // Передаем и состояние агента, и его контролы через контекст
+  const agentContextValue = {
+    agentState,
+    agentControls: controlsFromHook
+  };
+
+  // Для обратной совместимости с внешним кодом - синхронизируем глобальный объект
+  // TODO: удалить когда весь код будет использовать контекст
   Object.assign(agentControls, controlsFromHook);
 
   return (
-    <AgentContext.Provider value={{ agentState }}>
+    <AgentContext.Provider value={agentContextValue}>
       <Suspense fallback={<span>Загрузка...</span>}>
         <Canvas orthographic>
+          <Skybox />
           <ambientLight intensity={0.8} />
           <directionalLight position={[5, 5, 5]} intensity={0.5} />
           <IsometricCamera width={mapWidth} height={mapHeight} minZoom={minZoom} maxZoom={maxZoom} />
@@ -217,6 +181,7 @@ function SceneContent({ mapWidth, mapHeight, agentRadius, minZoom, maxZoom }) {
             radius={agentRadius}
             direction={agentState.direction}
             scaleY={agentState.scaleY}
+            isMoving={agentState.isMoving}
           />
         </Canvas>
       </Suspense>
@@ -224,13 +189,13 @@ function SceneContent({ mapWidth, mapHeight, agentRadius, minZoom, maxZoom }) {
   );
 }
 
-export function Scene() {
-  // Размеры карты должны совпадать с сеткой в Map (GRID_W x GRID_H)
-  const mapWidth = 8;
-  const mapHeight = 8;
-  const agentRadius = 0.5;
-  const minZoom = 0.5;
-  const maxZoom = 200;
+export function Scene({ 
+  mapWidth = DEFAULT_MAP_WIDTH, 
+  mapHeight = DEFAULT_MAP_HEIGHT,
+  agentRadius = DEFAULT_AGENT_RADIUS,
+  minZoom = DEFAULT_MIN_ZOOM,
+  maxZoom = DEFAULT_MAX_ZOOM
+} = {}) {
 
   return (
     <SceneContent 
@@ -242,3 +207,30 @@ export function Scene() {
     />
   )
 }
+
+// PropTypes для валидации пропсов
+Agent.propTypes = {
+  x: PropTypes.number.isRequired,
+  y: PropTypes.number.isRequired,
+  radius: PropTypes.number.isRequired,
+  direction: PropTypes.number.isRequired,
+  scaleY: PropTypes.number,
+  isMoving: PropTypes.bool
+};
+
+
+SceneContent.propTypes = {
+  mapWidth: PropTypes.number.isRequired,
+  mapHeight: PropTypes.number.isRequired,
+  agentRadius: PropTypes.number.isRequired,
+  minZoom: PropTypes.number.isRequired,
+  maxZoom: PropTypes.number.isRequired
+};
+
+Scene.propTypes = {
+  mapWidth: PropTypes.number,
+  mapHeight: PropTypes.number,
+  agentRadius: PropTypes.number,
+  minZoom: PropTypes.number,
+  maxZoom: PropTypes.number
+};

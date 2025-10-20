@@ -17,14 +17,15 @@ export function useAgent({
     steps = 20,
     duration = 300
 } = {}) {
-    const { grid, canEnterLogical, isAdjacentToPickup, isAdjacentToDropoff } = useLevel();
+    const { canEnterLogical, isAdjacentToPickup, isAdjacentToDropoff } = useLevel();
     const [agentState, setAgentState] = useState(() => ({
         // Логические координаты: целочисленные индексы клеток сетки (i, j)
         // По умолчанию стартуем в левом нижнем углу карты
         x: 0,
         y: mapHeight - 1,
         direction: 1,
-        scaleY: 1
+        scaleY: 1,
+        isMoving: false
     }))
     const [hasCargo, setHasCargo] = useState(false)
     const agentStateRef = useRef(agentState)
@@ -36,15 +37,19 @@ export function useAgent({
         if (dDir > 2) dDir -= DIRECTION_COUNT
         const dx = to.x - from.x
         const dy = to.y - from.y
+        
+        // Определяем есть ли физическое перемещение (не просто поворот)
+        const isActualMovement = dx !== 0 || dy !== 0
+        
         for (let step = 1; step <= steps; ++step) {
             await new Promise(res => setTimeout(res, duration / steps))
             const t = step / steps
             const x = from.x + dx * t
             const y = from.y + dy * t
             let newDir = (from.direction + dDir * t + DIRECTION_COUNT) % DIRECTION_COUNT
-            setAgentState({ x, y, direction: t < 1 ? newDir : to.direction, scaleY: 1 })
+            setAgentState({ x, y, direction: t < 1 ? newDir : to.direction, scaleY: 1, isMoving: isActualMovement })
         }
-        setAgentState({ ...to, scaleY: to.scaleY ?? 1 })
+        setAgentState({ ...to, scaleY: to.scaleY ?? 1, isMoving: false })
     }, [steps, duration])
 
     const animateSquash = useCallback(async ({ minScaleY = 0.6 } = {}) => {
