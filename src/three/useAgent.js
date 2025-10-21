@@ -17,7 +17,7 @@ export function useAgent({
     steps = 20,
     duration = 300
 } = {}) {
-    const { canEnterLogical, isAdjacentToPickup, isAdjacentToDropoff } = useLevel();
+    const { canEnterLogical, isAdjacentToPickup, isAdjacentToDropoff, markLevelCompleted } = useLevel();
     const [agentState, setAgentState] = useState(() => ({
         // Логические координаты: целочисленные индексы клеток сетки (i, j)
         // По умолчанию стартуем в левом нижнем углу карты
@@ -109,9 +109,10 @@ export function useAgent({
         if (nearDrop) {
             await animateSquash({ minScaleY: 0.55 })
             setHasCargo(false)
-            alert("🎉 Поздравляем! Уровень пройден! 🎉")
+            // Отмечаем уровень как пройденный
+            await markLevelCompleted()
         }
-    }, [hasCargo, animateSquash, isAdjacentToDropoff])
+    }, [hasCargo, animateSquash, isAdjacentToDropoff, markLevelCompleted])
 
     const moveBackward = useCallback(async (numSteps = 1) => {
         const totalSteps = Math.max(1, Number.isFinite(numSteps) ? Math.floor(numSteps) : 1)

@@ -1,6 +1,5 @@
 import React from "react";
 import * as THREE from "three";
-import { getLevelState, saveLevelState, deleteLevelState } from "../db/db";
 
 export const GRID_W = 8;
 export const GRID_H = 8;
@@ -44,28 +43,13 @@ export function LevelProvider({ children, levelId = 1 }) {
   const [grid, setGrid] = React.useState(makeInitialGrid);
   const [isLoading, setIsLoading] = React.useState(true);
   const [xmlAlgorithmConfig, setXmlAlgorithmConfig] = React.useState('<xml></xml>');
+  const [isLevelCompleted, setIsLevelCompleted] = React.useState(false);
 
-  // Загрузка данных уровня из базы данных при инициализации
+  // Инициализация уровня
   React.useEffect(() => {
-    const loadLevelData = async () => {
-      try {
-        setIsLoading(true);
-        const levelData = await getLevelState(levelId);
-        if (levelData) {
-          if (levelData.gridJson) {
-            setGrid(levelData.gridJson);
-          }
-          localStorage.getItem(`SavedAlgorithm/Level-${levelId}`);
-          setXmlAlgorithmConfig(xmlAlgorithmConfig);
-        }
-      } catch (error) {
-        console.error("Ошибка при загрузке данных уровня:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadLevelData();
+    setIsLoading(true);
+    setGrid(makeInitialGrid());
+    setIsLoading(false);
   }, [levelId]);
 
   // Утилиты, которые используют значения из контекста
@@ -128,16 +112,17 @@ export function LevelProvider({ children, levelId = 1 }) {
     },
 
     // Сброс уровня к начальному состоянию
-    resetLevel: async () => {
-      try {
-        await deleteLevelState(levelId);
-        setGrid(makeInitialGrid());
-        setXmlAlgorithmConfig('<xml></xml>');
-        return true;
-      } catch (error) {
-        console.error("Ошибка при сбросе уровня:", error);
-        return false;
-      }
+    resetLevel: () => {
+      setGrid(makeInitialGrid());
+      setXmlAlgorithmConfig('<xml></xml>');
+      setIsLevelCompleted(false);
+      return true;
+    },
+
+    // Отметить уровень как пройденный
+    markLevelCompleted: () => {
+      setIsLevelCompleted(true);
+      return true;
     },
 
     initAlgorithmConfig: () => {
@@ -179,6 +164,7 @@ export function LevelProvider({ children, levelId = 1 }) {
       setGrid, 
       xmlAlgorithmConfig,
       isLoading,
+      isLevelCompleted,
       levelId,
       ...levelUtils 
     }}>

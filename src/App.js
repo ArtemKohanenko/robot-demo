@@ -7,6 +7,7 @@ import RobotCommandGenerator from "./blockly/robotCommandGenerator";
 import executeCommand from "./interpreter/executeCommand";
 import { useCommandQueue } from "./interpreter/useCommandQueue";
 import { LevelProvider, useLevel } from "./state/levelContext";
+import Onboarding from "./components/Onboarding";
 const flyoutToolbox = {
   kind: "flyoutToolbox",
   contents: [
@@ -55,7 +56,7 @@ const flyoutToolbox = {
 
 function AppContent() {
   const workspaceRef = useRef(null);
-  const { updateAlgorithmConfig, initAlgorithmConfig } = useLevel();
+  const { updateAlgorithmConfig, initAlgorithmConfig, isLevelCompleted } = useLevel();
   const initXmlAlgorithmConfig = initAlgorithmConfig();
 
   const [state, api] = useCommandQueue(executeCommand);
@@ -107,6 +108,7 @@ function AppContent() {
                 api.run(commands);
               }
           }>{state.status === "running" ? "Waiting..." : "Execute"}</button>
+        <Onboarding isCompleted={isLevelCompleted} />
       </div>
     </div>
   );

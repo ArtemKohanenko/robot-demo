@@ -1,0 +1,106 @@
+.gesture-onboarding-container {
+  width: 352px;
+  height: 317px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #753af2;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.onboarding-title {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+}
+
+.onboarding-text {
+  margin: 0 0 auto 0;
+  font-size: 17px;
+  line-height: 1.5;
+  color: white;
+  flex-grow: 1;
+}
+
+.onboarding-paragraph {
+  margin: 0 0 12px 0;
+}
+
+.onboarding-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.onboarding-navigation {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.nav-button {
+  width: 36px;
+  height: 36px;
+  background-color: transparent;
+  color: white;
+  border: 2px solid white;
+  border-radius: 4px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-button:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+
+.nav-button:active:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: scale(0.95);
+}
+
+.nav-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.done-button {
+  padding: 8px 16px;
+  min-width: 100px;
+  background-color: transparent;
+  color: white;
+  border: 2px solid white;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.done-button:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+
+.done-button:active:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: scale(0.95);
+}
+
+.done-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
