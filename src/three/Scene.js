@@ -1,4 +1,4 @@
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import React, { Suspense, useEffect, useRef, useState } from 'react'
 import PropTypes from 'prop-types'
@@ -18,6 +18,7 @@ const DEFAULT_AGENT_RADIUS = 0.5;
 // Компонент скайбокса
 function Skybox() {
   const meshRef = useRef();
+  const { camera } = useThree();
   
   useEffect(() => {
     const loader = new THREE.TextureLoader();
@@ -30,10 +31,17 @@ function Skybox() {
     });
   }, []);
 
+  // Привязываем скайбокс к позиции камеры каждый кадр
+  useFrame(() => {
+    if (meshRef.current && camera) {
+      meshRef.current.position.copy(camera.position);
+    }
+  });
+
   return (
     <mesh ref={meshRef}>
-      <sphereGeometry args={[500, 60, 40]} />
-      <meshBasicMaterial side={THREE.BackSide} />
+      <sphereGeometry args={[50, 60, 40]} />
+      <meshBasicMaterial side={THREE.BackSide} color="#87CEEB" />
     </mesh>
   );
 }
@@ -101,10 +109,16 @@ function Agent({ x, y, radius, direction, scaleY = 1, isMoving = false }) {
 
     if (isMoving) {
       // Включаем анимацию ходьбы
-      walkAction?.fadeIn(0.2);
+      if (walkAction) {
+        walkAction.reset();
+        walkAction.play();
+        walkAction.fadeIn(0.2);
+      }
     } else {
       // Выключаем анимацию ходьбы
-      walkAction?.fadeOut(0.2);
+      if (walkAction) {
+        walkAction.fadeOut(0.2);
+      }
     }
 
     return () => {
@@ -164,8 +178,8 @@ function SceneContent({ mapWidth, mapHeight, agentRadius, minZoom, maxZoom }) {
       <Suspense fallback={<span>Загрузка...</span>}>
         <Canvas orthographic>
           <Skybox />
-          <ambientLight intensity={0.8} />
-          <directionalLight position={[5, 5, 5]} intensity={0.5} />
+          <ambientLight intensity={2.5} />
+          <directionalLight position={[10, 15, 10]} intensity={2.0} />
           <IsometricCamera width={mapWidth} height={mapHeight} minZoom={minZoom} maxZoom={maxZoom} />
           <OrthoPanZoomControls minZoom={minZoom} maxZoom={maxZoom} />
           <Map width={mapWidth} height={mapHeight} grid={grid} gridToWorld={gridToWorld} />

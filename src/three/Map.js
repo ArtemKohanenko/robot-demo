@@ -1,13 +1,13 @@
-import * as THREE from "three";
 import { useLoader } from '@react-three/fiber'
 import React from 'react';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { GRID_W, GRID_H, CELL } from '../state/levelContext';
 
 const CELL_SIZE = 1.0;
 
 // ====== Визуализация ======
 function GridVisual({ grid, mapWidth = GRID_W, mapHeight = GRID_H, gridToWorld }) {
-  const grassTexture = useLoader(THREE.TextureLoader, '/textures/cell.png')
+  const floorModel = useLoader(GLTFLoader, '/models/Floor.glb')
   const cells = [];
   for (let j = 0; j < mapHeight; j++) {
     for (let i = 0; i < mapWidth; i++) {
@@ -15,14 +15,11 @@ function GridVisual({ grid, mapWidth = GRID_W, mapHeight = GRID_H, gridToWorld }
       const world = gridToWorld(i, j);
       // базовая плитка
       cells.push(
-        <mesh
+        <primitive
           key={`tile-${i}-${j}`}
+          object={floorModel.scene.clone()}
           position={[world.x, 0, world.z]}
-          rotation={[-Math.PI / 2, 0, 0]}
-        >
-          <planeGeometry args={[CELL_SIZE * 0.98, CELL_SIZE * 0.98]} />
-          <meshBasicMaterial map={grassTexture} />
-        </mesh>
+        />
       );
 
       // отображаем объекты поверх плитки
