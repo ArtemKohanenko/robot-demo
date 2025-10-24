@@ -1,7 +1,8 @@
 
 const ifStack = [];
+const gestureStack = [];
 
-export default function executeVirtualRobotCommand(cmd, agentControls, isWallAt) {
+export default function executeVirtualRobotCommand(cmd, agentControls, isWallAt, gestureHandler) {
   const text = String(cmd).trim();
 
   // Сперва обрабатываем управляющие конструкции IF/END_IF
@@ -27,8 +28,33 @@ export default function executeVirtualRobotCommand(cmd, agentControls, isWallAt)
     return Promise.resolve();
   }
 
+  // Обработка команды WAIT_FOR_GESTURE
+  const gestureMatch = text.match(/^WAIT_FOR_GESTURE\s+(.+)$/i);
+  if (gestureMatch) {
+    const targetGestureName = gestureMatch[1].trim();
+    
+    if (!gestureHandler) {
+      return Promise.reject(new Error("Gesture handler not provided"));
+    }
+    
+    // Запускаем ожидание жеста
+    return gestureHandler.waitForGesture(targetGestureName).then(detected => {
+      gestureStack.push(Boolean(detected));
+      return Promise.resolve();
+    });
+  }
+
+  if (/^END_GESTURE\b/i.test(text)) {
+    gestureStack.pop();
+    return Promise.resolve();
+  }
+
   // Если текущая ветка ложная — игнорируем любые исполняемые команды
   if (ifStack.length > 0 && ifStack[ifStack.length - 1] === false) {
+    return Promise.resolve();
+  }
+  
+  if (gestureStack.length > 0 && gestureStack[gestureStack.length - 1] === false) {
     return Promise.resolve();
   }
 

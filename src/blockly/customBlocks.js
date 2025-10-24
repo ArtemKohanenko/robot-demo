@@ -140,3 +140,58 @@ Blockly.Blocks['is_wall_ahead'] = {
         this.setHelpUrl("");
     }
 };
+
+Blockly.Blocks['if_gesture_then'] = {
+    init: function () {
+        this.appendValueInput("GESTURE")
+            .setCheck("Gesture")
+            .appendField("If gesture");
+        this.appendDummyInput()
+            .appendField("then");
+        this.appendStatementInput("DO")
+            .setCheck(null)
+            .appendField("");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(290);
+        this.setTooltip("Wait for gesture and execute commands when detected");
+        this.setHelpUrl("");
+    }
+};
+
+// Функция для создания блоков жестов динамически
+export function createGestureBlocks(gestureClasses) {
+    if (!gestureClasses || gestureClasses.length === 0) {
+        return;
+    }
+    
+    // Создаём отдельный блок для каждого жеста
+    gestureClasses.forEach(gesture => {
+        const blockType = `gesture_${gesture.id}_${gesture.name.replace(/\s+/g, '_')}`;
+        
+        Blockly.Blocks[blockType] = {
+            init: function () {
+                this.appendDummyInput()
+                    .appendField(gesture.name);
+                this.setInputsInline(false);
+                this.setOutput(true, "Gesture");
+                this.setColour(290);
+                this.setTooltip(`Gesture: ${gesture.name}`);
+                this.setHelpUrl("");
+                // Сохраняем имя жеста в блоке
+                this.gestureName = gesture.name;
+            }
+        };
+    });
+}
+
+// Функция для получения списка типов блоков жестов
+export function getGestureBlockTypes(gestureClasses) {
+    if (!gestureClasses || gestureClasses.length === 0) {
+        return [];
+    }
+    
+    return gestureClasses.map(gesture => {
+        return `gesture_${gesture.id}_${gesture.name.replace(/\s+/g, '_')}`;
+    });
+}

@@ -3,6 +3,7 @@ import * as tf from '@tensorflow/tfjs';
 import * as handPoseDetection from '@tensorflow-models/hand-pose-detection';
 import * as knnClassifier from '@tensorflow-models/knn-classifier';
 import { saveGestureData, loadGestureData, clearGestureData } from '../utils/indexedDB';
+import extractGestureFeatures from '../utils/gestureFeatures';
 
 const GestureContext = React.createContext(null);
 
@@ -132,11 +133,8 @@ export function GestureProvider({ children }) {
         throw new Error('Классификатор не инициализирован');
       }
 
-      // Преобразование ключевых точек в тензор
-      const features = [];
-      keypoints.forEach((kp) => {
-        features.push(kp.x, kp.y, kp.z || 0);
-      });
+      // Извлечение улучшенных признаков из ключевых точек
+      const features = extractGestureFeatures(keypoints);
       const featuresTensor = tf.tensor2d([features]);
 
       // Добавление в классификатор
@@ -220,10 +218,8 @@ export function GestureProvider({ children }) {
         return null;
       }
 
-      const features = [];
-      keypoints.forEach((kp) => {
-        features.push(kp.x, kp.y, kp.z || 0);
-      });
+      // Извлечение улучшенных признаков из ключевых точек
+      const features = extractGestureFeatures(keypoints);
       const featuresTensor = tf.tensor2d([features]);
 
       const result = await classifierRef.current.predictClass(featuresTensor);

@@ -63,4 +63,30 @@ RobotCommandGenerator["is_wall_ahead"] = function (block) {
   return ["IS_WALL_AHEAD", RobotCommandGenerator.ORDER_ATOMIC];
 };
 
+RobotCommandGenerator["if_gesture_then"] = function (block) {
+  const gesture =
+    RobotCommandGenerator.valueToCode(block, "GESTURE", RobotCommandGenerator.ORDER_ATOMIC) || "UNKNOWN";
+  const branch = RobotCommandGenerator.statementToCode(block, "DO");
+  const next = RobotCommandGenerator.blockToCode(block.getNextBlock()) || "";
+  let code = "";
+  code += `WAIT_FOR_GESTURE ${gesture}\n`;
+  code += branch;
+  code += "END_GESTURE\n";
+  return code + next;
+};
+
+// Функция для регистрации генераторов для динамических блоков жестов
+export function registerGestureGenerators(gestureClasses) {
+  if (!gestureClasses || gestureClasses.length === 0) {
+    return;
+  }
+  
+  gestureClasses.forEach(gesture => {
+    const blockType = `gesture_${gesture.id}_${gesture.name.replace(/\s+/g, '_')}`;
+    RobotCommandGenerator[blockType] = function (block) {
+      return [gesture.name, RobotCommandGenerator.ORDER_ATOMIC];
+    };
+  });
+}
+
 export default RobotCommandGenerator;

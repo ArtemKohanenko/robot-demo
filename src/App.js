@@ -1,15 +1,17 @@
 import { BlocklyWorkspace } from "react-blockly"
 import "./App.css";
 import "./blockly/customBlocks";
-import { useRef } from "react";
+import { createGestureBlocks, getGestureBlockTypes } from "./blockly/customBlocks";
+import RobotCommandGenerator, { registerGestureGenerators } from "./blockly/robotCommandGenerator";
+import { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { Scene } from "./three/Scene";
-import RobotCommandGenerator from "./blockly/robotCommandGenerator";
 import executeCommand from "./interpreter/executeCommand";
 import { useCommandQueue } from "./interpreter/useCommandQueue";
 import { LevelProvider, useLevel } from "./state/levelContext";
-import { GestureProvider } from "./state/gestureContext";
+import { GestureProvider, useGesture } from "./state/gestureContext";
 import Onboarding from "./components/Onboarding";
-const flyoutToolbox = {
+import { GestureDetector } from "./components/GestureDetector";
+const baseFlyoutToolbox = {
   kind: "flyoutToolbox",
   contents: [
     {
@@ -51,6 +53,10 @@ const flyoutToolbox = {
     {
       kind: "block",
       type: "is_wall_ahead"
+    },
+    {
+      kind: "block",
+      type: "if_gesture_then",
     }
   ],
 };
@@ -58,9 +64,84 @@ const flyoutToolbox = {
 function AppContent() {
   const workspaceRef = useRef(null);
   const { updateAlgorithmConfig, initAlgorithmConfig, isLevelCompleted } = useLevel();
+  const { gestureState } = useGesture();
   const initXmlAlgorithmConfig = initAlgorithmConfig();
 
-  const [state, api] = useCommandQueue(executeCommand);
+  const [gestureDetectorState, setGestureDetectorState] = useState({
+    isActive: false,
+    targetGesture: null,
+    resolveGesture: null,
+  });
+
+  // Создаем gestureHandler для работы с жестами в executeCommand
+  const gestureHandlerRef = useRef({
+    waitForGesture: (targetGestureName) => {
+      return new Promise((resolve) => {
+        setGestureDetectorState({
+          isActive: true,
+          targetGesture: targetGestureName,
+          resolveGesture: resolve,
+        });
+      });
+    }
+  });
+
+  const gestureHandler = gestureHandlerRef.current;
+
+  const handleGestureDetected = useCallback((detected) => {
+    setGestureDetectorState(prev => {
+      if (prev.resolveGesture) {
+        prev.resolveGesture(detected);
+      }
+      return {
+        isActive: false,
+        targetGesture: null,
+        resolveGesture: null,
+      };
+    });
+  }, []);
+
+  const handleCloseGestureDetector = useCallback(() => {
+    setGestureDetectorState(prev => {
+      if (prev.resolveGesture) {
+        prev.resolveGesture(false);
+      }
+      return {
+        isActive: false,
+        targetGesture: null,
+        resolveGesture: null,
+      };
+    });
+  }, []);
+
+  const [state, api] = useCommandQueue(executeCommand, gestureHandler);
+
+  // Создаём toolbox с динамическими блоками жестов
+  const flyoutToolbox = useMemo(() => {
+    const toolbox = { ...baseFlyoutToolbox };
+    
+    if (gestureState.gestureClasses && gestureState.gestureClasses.length > 0) {
+      // Создаём блоки для каждого жеста
+      createGestureBlocks(gestureState.gestureClasses);
+      registerGestureGenerators(gestureState.gestureClasses);
+      
+      // Добавляем блоки жестов в toolbox
+      const gestureBlockTypes = getGestureBlockTypes(gestureState.gestureClasses);
+      const gestureBlocks = gestureBlockTypes.map(type => ({
+        kind: "block",
+        type: type
+      }));
+      
+      toolbox.contents = [...baseFlyoutToolbox.contents, ...gestureBlocks];
+    }
+    
+    return toolbox;
+  }, [gestureState.gestureClasses]);
+
+  // Ключ для пересоздания workspace при изменении жестов
+  const workspaceKey = useMemo(() => {
+    return `workspace-${gestureState.gestureClasses.length}`;
+  }, [gestureState.gestureClasses]);
 
   function workspaceDidChange(workspace) {
     workspaceRef.current = workspace;
@@ -70,7 +151,7 @@ function AppContent() {
     <div className="flex-row full-size">
       <div className="flex-1 flex-col">
       <BlocklyWorkspace
-          key="flyout-only"
+          key={workspaceKey}
           toolboxConfiguration={flyoutToolbox}
           initialXml={initXmlAlgorithmConfig}
           onXmlChange={updateAlgorithmConfig}
@@ -111,6 +192,13 @@ function AppContent() {
           }>{state.status === "running" ? "Waiting..." : "Execute"}</button>
         <Onboarding isCompleted={isLevelCompleted} />
       </div>
+      {gestureDetectorState.isActive && (
+        <GestureDetector
+          targetGesture={gestureDetectorState.targetGesture}
+          onGestureDetected={handleGestureDetected}
+          onClose={handleCloseGestureDetector}
+        />
+      )}
     </div>
   );
 }

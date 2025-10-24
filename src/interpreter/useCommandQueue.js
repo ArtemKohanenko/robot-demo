@@ -2,7 +2,7 @@ import React from 'react';
 import { agentControls } from '../state/agentContext'
 import { useLevel } from '../state/levelContext'
 
-export function useCommandQueue(executor) {
+export function useCommandQueue(executor, gestureHandler) {
   const { isWallAt } = useLevel();
   const [state, setState] = React.useState({
     queue: [],
@@ -88,7 +88,7 @@ export function useCommandQueue(executor) {
     };
     cancelCurrentRef.current = cancelFunc;
 
-    executor(next, agentControls, isWallAt)
+    executor(next, agentControls, isWallAt, gestureHandler)
       .then(() => {
         if (canceled) return;
         cancelCurrentRef.current = null;
@@ -99,7 +99,7 @@ export function useCommandQueue(executor) {
         cancelCurrentRef.current = null;
         setState(prev => ({ ...prev, status: "error", error: err }));
       });
-  }, [state, executor, isWallAt]);
+  }, [state, executor, isWallAt, gestureHandler]);
 
   return [state, { enqueue, setQueue, start, pause, resume, stop, run }];
 }
