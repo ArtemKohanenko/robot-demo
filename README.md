@@ -2,10 +2,8 @@
 
 Запускается на node 16 версии.
 
-Работают все блоки, кроме "if" (т.к. объекты для проверки условий пока не добавлены).
-
 ```
-npm install
+yarn install --legacy-peer-deps
 
-npm run start
+yarn start
 ```
