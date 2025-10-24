@@ -1,8 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import GestureRecognition from './GestureRecognition';
 import './Onboarding.css';
 
 function Onboarding({ isCompleted = false }) {
   const [currentPage, setCurrentPage] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        setIsModalOpen(false);
+      }
+    };
+
+    if (isModalOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isModalOpen]);
 
   const pages = [
     {
@@ -60,36 +79,54 @@ function Onboarding({ isCompleted = false }) {
         ))}
       </div>
       
-      {
-        isCompleted ?
+      <div className="onboarding-footer">
+        {
+          isCompleted ?
+            <div className="onboarding-navigation">
+              <button 
+                className="done-button"
+              >
+                ✓ Готово
+              </button>
+            </div>
+          :
           <div className="onboarding-navigation">
-            <button 
-              className="done-button"
-            >
-              ✓ Готово
-            </button>
+              <button 
+                className="nav-button"
+                onClick={goToPrevPage}
+                disabled={currentPage === 0}
+              >
+                <img src="images/Arrow.svg" style={{ transform: 'rotate(180deg)' }}/>
+              </button>
+              <button 
+                className="nav-button"
+                onClick={goToNextPage}
+                disabled={currentPage === pages.length - 1}
+              >
+                <img src="images/Arrow.svg"/>
+              </button>
+            </div>
+        }
+        
+        {/* Add Gesture button */}
+        <button 
+          className="add-gesture-button"
+          onClick={() => setIsModalOpen(true)}
+        >
+          Add Gesture
+        </button>
+      </div>
+      
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content" ref={modalRef}>
+            <GestureRecognition />
           </div>
-        :
-        <div className="onboarding-navigation">
-            <button 
-              className="nav-button"
-              onClick={goToPrevPage}
-              disabled={currentPage === 0}
-            >
-              <img src="images/Arrow.svg" style={{ transform: 'rotate(180deg)' }}/>
-            </button>
-            <button 
-              className="nav-button"
-              onClick={goToNextPage}
-              disabled={currentPage === pages.length - 1}
-            >
-              <img src="images/Arrow.svg"/>
-            </button>
-          </div>
-      }
+        </div>
+      )}
     </div>
   );
 }
 
 export default Onboarding;
-

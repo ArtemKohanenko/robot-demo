@@ -67,6 +67,15 @@ body {
 .executeButton {
   height: 30px;
   width: 120px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+.executeButton:hover {
+  background-color: #45a049;
+}
+
 }
 
 .executeButton:disabled {

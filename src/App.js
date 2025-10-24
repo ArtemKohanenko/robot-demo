@@ -7,6 +7,7 @@ import RobotCommandGenerator from "./blockly/robotCommandGenerator";
 import executeCommand from "./interpreter/executeCommand";
 import { useCommandQueue } from "./interpreter/useCommandQueue";
 import { LevelProvider, useLevel } from "./state/levelContext";
+import { GestureProvider } from "./state/gestureContext";
 import Onboarding from "./components/Onboarding";
 const flyoutToolbox = {
   kind: "flyoutToolbox",
@@ -116,8 +117,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <LevelProvider>
-      <AppContent />
-    </LevelProvider>
+    <GestureProvider>
+      <LevelProvider>
+        <AppContent />
+      </LevelProvider>
+    </GestureProvider>
   );
 }

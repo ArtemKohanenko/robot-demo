@@ -1,0 +1,354 @@
+.gesture-recognition {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  color: #333;
+}
+
+.gesture-recognition h2 {
+  margin: 0 0 15px 0;
+  font-size: 20px;
+  text-align: center;
+  color: #667eea;
+}
+
+.gesture-status {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.gesture-status-item {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.gesture-status-item.loading {
+  background: #ff9800;
+  color: white;
+}
+
+.gesture-status-item.ready {
+  background: #4caf50;
+  color: white;
+}
+
+.gesture-status-item.inactive {
+  background: #757575;
+  color: white;
+}
+
+.gesture-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.gesture-video-container {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+  height: fit-content;
+}
+
+.gesture-video-container video {
+  width: 100%;
+  height: auto;
+  display: block;
+  transform: scaleX(-1);
+}
+
+.gesture-hand-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transform: scaleX(-1);
+}
+
+.gesture-training-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.gesture-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.gesture-add-class {
+  display: flex;
+  gap: 8px;
+}
+
+.gesture-class-input {
+  flex: 1;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+}
+
+.gesture-class-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.gesture-add-button {
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.gesture-add-button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.gesture-add-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gesture-classes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.gesture-no-classes {
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  padding: 12px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.gesture-class-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gesture-train-button {
+  flex: 1;
+  padding: 8px;
+  font-size: 13px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gesture-train-button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.gesture-train-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gesture-count {
+  font-size: 12px;
+  color: #666;
+  min-width: 30px;
+  text-align: right;
+}
+
+.gesture-remove-button {
+  padding: 4px 8px;
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.gesture-remove-button:hover {
+  opacity: 0.9;
+}
+
+.gesture-prediction {
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.gesture-prediction-text {
+  font-size: 16px;
+  font-weight: bold;
+  color: #667eea;
+  margin-bottom: 8px;
+}
+
+.gesture-confidence {
+  position: relative;
+  width: 100%;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.gesture-confidence-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.3s ease;
+  border-radius: 10px;
+}
+
+.gesture-confidence-value {
+  font-size: 12px;
+  font-weight: bold;
+  color: #667eea;
+}
+
+.gesture-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.gesture-action-button {
+  padding: 8px;
+  font-size: 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+}
+
+.gesture-action-button.start {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+}
+
+.gesture-action-button.stop {
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+}
+
+.gesture-action-button.reset {
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+}
+
+.gesture-action-button.save {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+}
+
+.gesture-action-button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.gesture-action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gesture-threshold {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gesture-threshold label {
+  font-size: 12px;
+  font-weight: bold;
+  color: #667eea;
+}
+
+.gesture-threshold-slider {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: #ddd;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.gesture-threshold-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+}
+
+.gesture-threshold-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  border: none;
+}
+
+/* Scrollbar styling */
+.gesture-controls::-webkit-scrollbar,
+.gesture-classes::-webkit-scrollbar {
+  width: 6px;
+}
+
+.gesture-controls::-webkit-scrollbar-track,
+.gesture-classes::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.gesture-controls::-webkit-scrollbar-thumb,
+.gesture-classes::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.gesture-controls::-webkit-scrollbar-thumb:hover,
+.gesture-classes::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .gesture-content {
+    grid-template-columns: 1fr;
+  }
+}
+
